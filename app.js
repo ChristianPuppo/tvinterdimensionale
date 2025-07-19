@@ -4,6 +4,7 @@ class VintageTVApp {
         this.isPlaying = false;
         this.recordingTime = 0;
         this.recordingInterval = null;
+        this.playlistData = null;
 
         // DOM Elements
         this.channelInfo = document.querySelector('.channel-info');
@@ -31,6 +32,7 @@ class VintageTVApp {
             await spotifyHandler.initialize();
             await youtubeHandler.initializePlayer();
             this.startRecordingTimer();
+            this.updateChannelInfo('CHANNEL 0 - INSERT PLAYLIST URL');
         } catch (error) {
             console.error('Initialization error:', error);
             this.updateChannelInfo('ERROR - CHECK API KEYS');
@@ -42,15 +44,17 @@ class VintageTVApp {
             this.showGlitchEffect();
             const playlistUrl = this.playlistInput.value.trim();
             
-            let playlist;
+            let playlistData;
             if (playlistUrl) {
-                playlist = await spotifyHandler.fetchPlaylist(playlistUrl);
+                playlistData = await spotifyHandler.fetchPlaylist(playlistUrl);
             } else {
-                playlist = spotifyHandler.setFallbackPlaylist();
+                playlistData = spotifyHandler.setFallbackPlaylist();
             }
 
-            if (playlist && playlist.length > 0) {
+            if (playlistData.playlist && playlistData.playlist.length > 0) {
+                this.playlistData = playlistData;
                 this.currentTrackIndex = 0;
+                this.updateChannelInfo(`LOADING: ${playlistData.details.name}`);
                 await this.playCurrentTrack();
             } else {
                 this.updateChannelInfo('NO SIGNAL - PLAYLIST EMPTY');
@@ -67,14 +71,27 @@ class VintageTVApp {
             if (!track) return;
 
             this.showGlitchEffect();
-            this.updateChannelInfo(`CHANNEL ${this.currentTrackIndex + 1} - ${track.title}`);
+            
+            // Update channel info with track details
+            const channelText = `CH${this.currentTrackIndex + 1} - ${track.title}`;
+            this.updateChannelInfo(channelText);
+
+            // Show album art if available (you might want to add an element for this)
+            if (track.albumArt) {
+                // You could add an img element and update its src here
+                console.log('Album art:', track.albumArt);
+            }
 
             const videoId = await youtubeHandler.searchVideo(track.title, track.artist);
             await youtubeHandler.loadAndPlayVideo(videoId);
             this.isPlaying = true;
+
+            // Update document title
+            document.title = `${track.title} - ${track.artist} | Vintage TV`;
         } catch (error) {
             console.error('Failed to play track:', error);
             this.updateChannelInfo('ERROR - PLAYBACK FAILED');
+            setTimeout(() => this.nextTrack(), 3000);
         }
     }
 
