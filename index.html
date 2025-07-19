@@ -33,6 +33,7 @@
                         <div class="select-items select-hide"></div>
                     </div>
                     <button id="loadButton">Load Playlist</button>
+                    <button id="playPauseButton" onclick="togglePlayPause()">⏸ Pause</button>
                 </div>
             </div>
             <button id="nextChannel" disabled>Channel +</button>
@@ -373,12 +374,71 @@
                     disablekb: 1,
                     fs: 0,
                     modestbranding: 1,
-                    rel: 0
+                    rel: 0,
+                    showinfo: 0,
+                    iv_load_policy: 3,
+                    playsinline: 1
                 },
                 events: {
                     onError: onPlayerError,
-                    onStateChange: onPlayerStateChange
+                    onStateChange: onPlayerStateChange,
+                    onReady: onPlayerReady
                 }
+            });
+        }
+
+        function onPlayerReady(event) {
+            // Nascondi i controlli nativi di YouTube
+            const iframe = document.querySelector('#player');
+            if (iframe) {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const style = document.createElement('style');
+                style.textContent = `
+                    .ytp-chrome-top,
+                    .ytp-chrome-bottom,
+                    .ytp-watermark,
+                    .ytp-title,
+                    .ytp-show-cards-title {
+                        display: none !important;
+                    }
+                `;
+                iframeDoc.head.appendChild(style);
+            }
+        }
+
+        // Aggiunta del controllo di play/pause
+        let isPlaying = true;
+        function togglePlayPause() {
+            if (isPlaying) {
+                youtubePlayer.pauseVideo();
+                document.getElementById('playPauseButton').textContent = '▶ Play';
+            } else {
+                youtubePlayer.playVideo();
+                document.getElementById('playPauseButton').textContent = '⏸ Pause';
+            }
+            isPlaying = !isPlaying;
+            showGlitchEffect();
+        }
+
+        // Aggiunta dell'effetto intermission
+        function showIntermission() {
+            return new Promise(resolve => {
+                const screen = document.querySelector('.screen');
+                const intermissionOverlay = document.createElement('div');
+                intermissionOverlay.className = 'intermission-overlay';
+                intermissionOverlay.innerHTML = 'PLEASE STAND BY';
+                
+                // Aggiungi suono intermission
+                const intermissionSound = new Audio('data:audio/wav;base64,UklGRn4AAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA5/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/eQ==');
+                intermissionSound.volume = 0.5;
+                
+                screen.appendChild(intermissionOverlay);
+                intermissionSound.play();
+                
+                setTimeout(() => {
+                    screen.removeChild(intermissionOverlay);
+                    resolve();
+                }, 2000);
             });
         }
 
@@ -413,20 +473,19 @@
 
                 log('Playing track:', track);
                 updateChannelInfo(`CHANNEL ${currentTrackIndex + 1} - ${track.title}`);
+                
+                // Mostra intermission prima di caricare il nuovo video
+                await showIntermission();
                 showGlitchEffect();
 
                 const videoId = await searchYouTubeVideo(track.title, track.artist);
                 if (videoId) {
                     youtubePlayer.loadVideoById(videoId);
+                    isPlaying = true;
+                    document.getElementById('playPauseButton').textContent = '⏸ Pause';
                 } else {
-                    // Se non troviamo il video con "official music video", proviamo solo con titolo e artista
-                    const videoId2 = await searchYouTubeVideo(track.title, track.artist);
-                    if (videoId2) {
-                        youtubePlayer.loadVideoById(videoId2);
-                    } else {
-                        updateChannelInfo('VIDEO NOT FOUND');
-                        setTimeout(playNextTrack, 3000);
-                    }
+                    updateChannelInfo('VIDEO NOT FOUND');
+                    setTimeout(playNextTrack, 3000);
                 }
             } catch (error) {
                 log('Error playing track:', error.message);

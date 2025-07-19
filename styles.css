@@ -446,6 +446,7 @@ select:focus {
     top: 60%;
 }
 
+/* Fix dropdown issues */
 .select-items {
     position: absolute;
     bottom: 100%;
@@ -463,50 +464,60 @@ select:focus {
     overflow-y: auto;
     display: flex;
     flex-direction: column-reverse;
-}
-
-.select-items::-webkit-scrollbar {
-    width: 8px;
-}
-
-.select-items::-webkit-scrollbar-track {
-    background: #000;
-    border-left: 2px solid #fff;
-}
-
-.select-items::-webkit-scrollbar-thumb {
-    background: #fff;
-    border: 2px solid #000;
+    transform-origin: bottom center;
+    transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .select-hide {
-    display: none;
+    transform: scaleY(0);
+    opacity: 0;
+    pointer-events: none;
 }
 
-.select-items div {
-    padding: 10px;
+/* Intermission overlay */
+.intermission-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 24px;
+    z-index: 1000;
+    animation: intermissionFlicker 0.5s infinite;
+}
+
+@keyframes intermissionFlicker {
+    0% { opacity: 1; }
+    25% { opacity: 0.8; }
+    50% { opacity: 0.6; }
+    75% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
+
+/* Play/Pause button */
+#playPauseButton {
+    background: #000;
+    border: 3px solid #fff;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', cursive;
     font-size: 12px;
     color: #fff;
     cursor: pointer;
-    border-top: 2px solid #fff;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #fff,
+        0 0 0 9px #000;
     transition: all 0.2s ease;
+    margin: 10px;
 }
 
-.select-items div:first-child {
-    border-top: none;
-}
-
-.select-items div:last-child {
-    border-bottom: none;
-}
-
-.select-items div:hover {
-    background-color: #0f0;
-    color: #000;
-}
-
-/* Glitch effect for dropdown */
-.select-selected:hover {
+#playPauseButton:hover {
     border-color: #0f0;
     box-shadow: 
         0 0 0 3px #000,
@@ -514,16 +525,26 @@ select:focus {
         0 0 0 9px #000;
 }
 
-@keyframes dropdownGlitch {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-2px); }
-    50% { transform: translateX(2px); }
-    75% { transform: translateX(-1px); }
-    100% { transform: translateX(0); }
+#playPauseButton:active {
+    transform: scale(0.95);
 }
 
-.select-items div:hover {
-    animation: dropdownGlitch 0.2s ease;
+/* Hide YouTube iframe when showing intermission */
+.intermission-active #player {
+    opacity: 0;
+}
+
+/* Fix YouTube player */
+#player {
+    pointer-events: none !important;
+}
+
+.ytp-chrome-top,
+.ytp-chrome-bottom,
+.ytp-watermark,
+.ytp-title,
+.ytp-show-cards-title {
+    display: none !important;
 }
 
 /* Custom scrollbar animation */
