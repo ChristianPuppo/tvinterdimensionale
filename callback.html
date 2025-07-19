@@ -36,51 +36,40 @@
 <body>
     <div class="message">AUTHENTICATING...</div>
     <div id="debug" class="debug"></div>
+    <script src="spotify.js"></script>
     <script>
-        function handleCallback() {
+        async function handleCallback() {
             const debugElement = document.getElementById('debug');
             const messageElement = document.querySelector('.message');
             
             // Log the full URL for debugging
             debugElement.textContent = 'Current URL: ' + window.location.href;
 
-            // Check for hash fragment
-            if (window.location.hash) {
-                const hash = window.location.hash.substring(1); // Remove the # symbol
-                const params = new URLSearchParams(hash);
-                const token = params.get('access_token');
+            // Check for authorization code
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
 
-                if (token) {
-                    localStorage.setItem('spotify_token', token);
-                    messageElement.textContent = 'AUTHENTICATION SUCCESSFUL';
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 1000);
-                } else {
-                    messageElement.textContent = 'ERROR: TOKEN NOT FOUND IN HASH';
-                    debugElement.textContent += '\nHash parameters: ' + hash;
-                }
-            } 
-            // Check for query parameters
-            else if (window.location.search) {
-                const params = new URLSearchParams(window.location.search);
-                const token = params.get('access_token');
-
-                if (token) {
-                    localStorage.setItem('spotify_token', token);
-                    messageElement.textContent = 'AUTHENTICATION SUCCESSFUL';
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 1000);
-                } else {
-                    messageElement.textContent = 'ERROR: TOKEN NOT FOUND IN QUERY';
-                    debugElement.textContent += '\nQuery parameters: ' + window.location.search;
-                }
+            if (error) {
+                messageElement.textContent = 'ERROR: ' + error.toUpperCase();
+                debugElement.textContent += '\nError details: ' + error;
+                return;
             }
-            // No token found in URL
-            else {
-                messageElement.textContent = 'ERROR: NO TOKEN PARAMETERS FOUND';
-                debugElement.textContent += '\nNo hash or query parameters found';
+
+            if (code) {
+                try {
+                    await spotifyHandler.getAccessToken(code);
+                    messageElement.textContent = 'AUTHENTICATION SUCCESSFUL';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } catch (error) {
+                    messageElement.textContent = 'ERROR: FAILED TO GET ACCESS TOKEN';
+                    debugElement.textContent += '\nError details: ' + error.message;
+                }
+            } else {
+                messageElement.textContent = 'ERROR: NO AUTHORIZATION CODE FOUND';
+                debugElement.textContent += '\nNo code parameter found in URL';
             }
         }
 

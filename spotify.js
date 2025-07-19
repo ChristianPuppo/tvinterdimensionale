@@ -9,14 +9,40 @@ class SpotifyHandler {
         const scopes = ['playlist-read-private', 'playlist-read-collaborative'];
         
         return 'https://accounts.spotify.com/authorize' +
-            '?client_id=' + clientId +
-            '&response_type=token' +
+            '?client_id=' + encodeURIComponent(clientId) +
             '&redirect_uri=' + encodeURIComponent(redirectUri) +
-            '&scope=' + encodeURIComponent(scopes.join(' '));
+            '&scope=' + encodeURIComponent(scopes.join(' ')) +
+            '&response_type=code' +
+            '&show_dialog=true';
     }
 
     isAuthenticated() {
         return !!localStorage.getItem('spotify_token');
+    }
+
+    async getAccessToken(code) {
+        const clientId = '7a82dcab533b4f3c8d440bb23f82c6b6';
+        const redirectUri = 'https://tvinterdimensionale-5wnf1jt0p-christians-projects-524bbc11.vercel.app/callback.html';
+        
+        const response = await fetch('https://accounts.spotify.com/api/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                grant_type: 'authorization_code',
+                code: code,
+                redirect_uri: redirectUri,
+                client_id: clientId,
+            }),
+        });
+
+        const data = await response.json();
+        if (data.access_token) {
+            localStorage.setItem('spotify_token', data.access_token);
+            return data.access_token;
+        }
+        throw new Error('Failed to get access token');
     }
 
     async fetchPlaylist(playlistUrl) {
