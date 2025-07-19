@@ -2,30 +2,54 @@ class SpotifyHandler {
     constructor() {
         this.accessToken = null;
         this.playlist = [];
+        this.checkAuthenticationOnLoad();
+    }
+
+    checkAuthenticationOnLoad() {
+        // Controlla se abbiamo già un token valido
+        const token = localStorage.getItem('spotify_token');
+        const expiration = localStorage.getItem('spotify_token_expiration');
+        
+        if (token && expiration && Date.now() < parseInt(expiration)) {
+            this.accessToken = token;
+            return true;
+        }
+        return false;
     }
 
     async initialize() {
-        try {
-            const response = await fetch('https://accounts.spotify.com/api/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Authorization': 'Basic ' + btoa(config.spotify.clientId + ':' + config.spotify.clientSecret)
-                },
-                body: 'grant_type=client_credentials'
-            });
-
-            const data = await response.json();
-            this.accessToken = data.access_token;
-        } catch (error) {
-            console.error('Failed to initialize Spotify:', error);
-            throw error;
+        if (this.checkAuthenticationOnLoad()) {
+            return;
         }
+
+        // Parametri per l'autenticazione OAuth
+        const clientId = config.spotify.clientId;
+        const redirectUri = window.location.origin + '/callback';
+        const scope = 'playlist-read-private playlist-read-collaborative';
+
+        // Genera uno state casuale per sicurezza
+        const state = Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('spotify_auth_state', state);
+
+        // Costruisci l'URL di autorizzazione
+        const authUrl = new URL('https://accounts.spotify.com/authorize');
+        authUrl.searchParams.append('client_id', clientId);
+        authUrl.searchParams.append('response_type', 'token');
+        authUrl.searchParams.append('redirect_uri', redirectUri);
+        authUrl.searchParams.append('state', state);
+        authUrl.searchParams.append('scope', scope);
+
+        // Redirect all'autorizzazione Spotify
+        window.location.href = authUrl.toString();
     }
 
     async fetchPlaylist(playlistUrl) {
         try {
-            // Extract playlist ID from URL
+            if (!this.accessToken) {
+                throw new Error('Not authenticated');
+            }
+
+            // Estrai l'ID della playlist dall'URL
             const playlistId = playlistUrl.split('playlist/')[1].split('?')[0];
             
             const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
@@ -34,12 +58,26 @@ class SpotifyHandler {
                 }
             });
 
+            if (!response.ok) {
+                if (response.status === 401) {
+                    // Token scaduto, rimuovi e richiedi nuova autenticazione
+                    localStorage.removeItem('spotify_token');
+                    localStorage.removeItem('spotify_token_expiration');
+                    await this.initialize();
+                    return;
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
             
-            this.playlist = data.items.map(item => ({
-                title: item.track.name,
-                artist: item.track.artists[0].name
-            }));
+            this.playlist = data.items
+                .filter(item => item.track) // Filtra eventuali tracce nulle
+                .map(item => ({
+                    title: item.track.name,
+                    artist: item.track.artists[0].name,
+                    duration: item.track.duration_ms
+                }));
 
             return this.playlist;
         } catch (error) {

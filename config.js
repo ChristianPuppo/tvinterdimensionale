@@ -1,8 +1,7 @@
 const config = {
     // Replace with your Spotify API credentials
     spotify: {
-        clientId: process.env.SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID',
-        clientSecret: process.env.SPOTIFY_CLIENT_SECRET || 'YOUR_SPOTIFY_CLIENT_SECRET'
+        clientId: process.env.SPOTIFY_CLIENT_ID || 'YOUR_SPOTIFY_CLIENT_ID'
     },
     // Replace with your YouTube Data API key
     youtube: {

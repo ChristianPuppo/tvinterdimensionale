@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Autenticazione Spotify - TV Interdimensionale</title>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .loading {
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .error {
+            color: #ff0000;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1 class="loading">SINTONIZZAZIONE IN CORSO...</h1>
+        <p id="error" class="error"></p>
+    </div>
+
+    <script>
+        // Estrae il token dall'URL
+        const hash = window.location.hash;
+        const token = hash.match(/access_token=([^&]*)/)?.[1];
+        const error = new URLSearchParams(window.location.search).get('error');
+
+        if (token) {
+            // Salva il token
+            localStorage.setItem('spotify_token', token);
+            // Salva anche la data di scadenza (1 ora da ora)
+            const expiresIn = parseInt(hash.match(/expires_in=([^&]*)/)?.[1] || '3600');
+            const expirationTime = Date.now() + (expiresIn * 1000);
+            localStorage.setItem('spotify_token_expiration', expirationTime.toString());
+            
+            // Redirect alla homepage dopo aver salvato il token
+            window.location.href = '/';
+        } else if (error) {
+            document.getElementById('error').textContent = 
+                'ERRORE DI SINTONIZZAZIONE: ' + 
+                (error === 'access_denied' ? 'ACCESSO NEGATO' : error.toUpperCase());
+        } else {
+            document.getElementById('error').textContent = 
+                'SEGNALE NON TROVATO: TOKEN NON RICEVUTO';
+        }
+    </script>
+</body>
+</html> 
