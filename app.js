@@ -13,11 +13,15 @@ class VintageTVApp {
         this.prevButton = document.getElementById('prevChannel');
         this.nextButton = document.getElementById('nextChannel');
         this.glitchEffect = document.querySelector('.glitch-effect');
+        this.spotifyLoginButton = document.getElementById('spotifyLogin');
+        this.authSection = document.getElementById('auth-section');
+        this.playlistSection = document.getElementById('playlist-section');
 
         // Bind event listeners
         this.loadButton.addEventListener('click', () => this.loadPlaylist());
         this.prevButton.addEventListener('click', () => this.prevTrack());
         this.nextButton.addEventListener('click', () => this.nextTrack());
+        this.spotifyLoginButton.addEventListener('click', () => this.handleSpotifyLogin());
         document.addEventListener('keydown', this.handleKeyPress.bind(this));
         document.addEventListener('videoEnded', () => this.nextTrack());
         document.addEventListener('videoError', () => this.handleVideoError());
@@ -32,12 +36,10 @@ class VintageTVApp {
             this.startRecordingTimer();
             
             // Check Spotify authentication
-            if (!spotifyHandler.isAuthenticated()) {
-                this.updateChannelInfo('NO SIGNAL - LOGIN REQUIRED');
-                this.loadButton.textContent = 'Login with Spotify';
-                this.loadButton.addEventListener('click', () => {
-                    window.location.href = spotifyHandler.getAuthUrl();
-                }, { once: true });
+            if (spotifyHandler.isAuthenticated()) {
+                this.showPlaylistControls();
+            } else {
+                this.showLoginButton();
             }
         } catch (error) {
             console.error('Initialization error:', error);
@@ -45,10 +47,26 @@ class VintageTVApp {
         }
     }
 
+    handleSpotifyLogin() {
+        window.location.href = spotifyHandler.getAuthUrl();
+    }
+
+    showLoginButton() {
+        this.authSection.style.display = 'flex';
+        this.playlistSection.style.display = 'none';
+        this.updateChannelInfo('NO SIGNAL - LOGIN REQUIRED');
+    }
+
+    showPlaylistControls() {
+        this.authSection.style.display = 'none';
+        this.playlistSection.style.display = 'flex';
+        this.updateChannelInfo('READY - ENTER PLAYLIST URL');
+    }
+
     async loadPlaylist() {
         try {
             if (!spotifyHandler.isAuthenticated()) {
-                window.location.href = spotifyHandler.getAuthUrl();
+                this.handleSpotifyLogin();
                 return;
             }
 
@@ -71,7 +89,7 @@ class VintageTVApp {
         } catch (error) {
             console.error('Failed to load playlist:', error);
             if (error.message === 'Not authenticated') {
-                window.location.href = spotifyHandler.getAuthUrl();
+                this.handleSpotifyLogin();
             } else {
                 this.updateChannelInfo('ERROR - INVALID PLAYLIST URL');
             }

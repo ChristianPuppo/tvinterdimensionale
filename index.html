@@ -24,9 +24,16 @@
         </div>
         <div class="controls">
             <button id="prevChannel">Channel -</button>
-            <div class="playlist-input">
-                <input type="text" id="playlistUrl" placeholder="Enter Spotify Playlist URL">
-                <button id="loadPlaylist">Load Playlist</button>
+            <div class="playlist-controls">
+                <div id="auth-section">
+                    <button id="spotifyLogin" class="spotify-button">
+                        <span class="spotify-icon">🎵</span> Connect with Spotify
+                    </button>
+                </div>
+                <div id="playlist-section" style="display: none;">
+                    <input type="text" id="playlistUrl" placeholder="Enter Spotify Playlist URL">
+                    <button id="loadPlaylist">Load Playlist</button>
+                </div>
             </div>
             <button id="nextChannel">Channel +</button>
         </div>
@@ -34,10 +41,7 @@
 
     <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
-    <!-- Load Spotify Web Playback SDK -->
-    <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <!-- Custom Scripts -->
-    <script src="config.js"></script>
     <script src="spotify.js"></script>
     <script src="youtube.js"></script>
     <script src="app.js"></script>
