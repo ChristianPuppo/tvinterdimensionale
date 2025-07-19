@@ -24,23 +24,23 @@ class SpotifyHandler {
 
         // Parametri per l'autenticazione OAuth
         const clientId = config.spotify.clientId;
-        const redirectUri = window.location.origin + '/callback';
-        const scope = 'playlist-read-private playlist-read-collaborative';
+        const redirectUri = encodeURIComponent(window.location.origin + '/callback');
+        const scope = encodeURIComponent('playlist-read-private playlist-read-collaborative');
 
         // Genera uno state casuale per sicurezza
         const state = Math.random().toString(36).substring(2, 15);
         localStorage.setItem('spotify_auth_state', state);
 
         // Costruisci l'URL di autorizzazione
-        const authUrl = new URL('https://accounts.spotify.com/authorize');
-        authUrl.searchParams.append('client_id', clientId);
-        authUrl.searchParams.append('response_type', 'token');
-        authUrl.searchParams.append('redirect_uri', redirectUri);
-        authUrl.searchParams.append('state', state);
-        authUrl.searchParams.append('scope', scope);
+        const authUrl = 'https://accounts.spotify.com/authorize' +
+            '?client_id=' + clientId +
+            '&response_type=token' +
+            '&redirect_uri=' + redirectUri +
+            '&state=' + state +
+            '&scope=' + scope;
 
         // Redirect all'autorizzazione Spotify
-        window.location.href = authUrl.toString();
+        window.location.href = authUrl;
     }
 
     async fetchPlaylist(playlistUrl) {
