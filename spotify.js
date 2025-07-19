@@ -2,43 +2,60 @@ class SpotifyHandler {
     constructor() {
         this.accessToken = null;
         this.playlist = [];
+        console.log('SpotifyHandler initialized');
         this.checkAuthenticationOnLoad();
     }
 
     checkAuthenticationOnLoad() {
+        console.log('Checking authentication');
         // Controlla se abbiamo già un token valido
         const token = localStorage.getItem('spotify_token');
         const expiration = localStorage.getItem('spotify_token_expiration');
         
+        console.log('Stored token:', token ? 'Found' : 'Not found');
+        console.log('Token expiration:', expiration);
+        
         if (token && expiration && Date.now() < parseInt(expiration)) {
+            console.log('Valid token found');
             this.accessToken = token;
             return true;
         }
+        console.log('No valid token found');
         return false;
     }
 
     async initialize() {
+        console.log('Initializing Spotify authentication');
         if (this.checkAuthenticationOnLoad()) {
+            console.log('Already authenticated');
             return;
         }
 
         // Parametri per l'autenticazione OAuth
         const clientId = config.spotify.clientId;
-        const redirectUri = encodeURIComponent(window.location.origin + '/callback');
-        const scope = encodeURIComponent('playlist-read-private playlist-read-collaborative');
+        console.log('Using client ID:', clientId);
+        
+        const redirectUri = window.location.origin + '/callback';
+        console.log('Redirect URI:', redirectUri);
+
+        const scope = 'playlist-read-private playlist-read-collaborative';
+        console.log('Requested scope:', scope);
 
         // Genera uno state casuale per sicurezza
         const state = Math.random().toString(36).substring(2, 15);
         localStorage.setItem('spotify_auth_state', state);
+        console.log('Generated state:', state);
 
         // Costruisci l'URL di autorizzazione
         const authUrl = 'https://accounts.spotify.com/authorize' +
-            '?client_id=' + clientId +
-            '&response_type=token' +
-            '&redirect_uri=' + redirectUri +
-            '&state=' + state +
-            '&scope=' + scope;
+            '?response_type=token' +
+            '&client_id=' + encodeURIComponent(clientId) +
+            '&scope=' + encodeURIComponent(scope) +
+            '&redirect_uri=' + encodeURIComponent(redirectUri) +
+            '&state=' + encodeURIComponent(state);
 
+        console.log('Authorization URL:', authUrl);
+        
         // Redirect all'autorizzazione Spotify
         window.location.href = authUrl;
     }

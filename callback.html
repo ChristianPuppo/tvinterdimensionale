@@ -26,6 +26,17 @@
         .error {
             color: #ff0000;
             margin-top: 20px;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .debug {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            font-size: 10px;
+            text-align: left;
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -34,30 +45,63 @@
         <h1 class="loading">SINTONIZZAZIONE IN CORSO...</h1>
         <p id="error" class="error"></p>
     </div>
+    <pre id="debug" class="debug"></pre>
 
     <script>
-        // Estrae il token dall'URL
-        const hash = window.location.hash;
-        const token = hash.match(/access_token=([^&]*)/)?.[1];
-        const error = new URLSearchParams(window.location.search).get('error');
+        function log(message, data = '') {
+            const debug = document.getElementById('debug');
+            const timestamp = new Date().toISOString();
+            debug.textContent += `${timestamp}: ${message}\n`;
+            if (data) {
+                debug.textContent += JSON.stringify(data, null, 2) + '\n';
+            }
+            console.log(message, data);
+        }
 
-        if (token) {
-            // Salva il token
-            localStorage.setItem('spotify_token', token);
-            // Salva anche la data di scadenza (1 ora da ora)
-            const expiresIn = parseInt(hash.match(/expires_in=([^&]*)/)?.[1] || '3600');
-            const expirationTime = Date.now() + (expiresIn * 1000);
-            localStorage.setItem('spotify_token_expiration', expirationTime.toString());
+        try {
+            log('Callback page loaded');
+            log('URL:', window.location.href);
             
-            // Redirect alla homepage dopo aver salvato il token
-            window.location.href = '/';
-        } else if (error) {
-            document.getElementById('error').textContent = 
-                'ERRORE DI SINTONIZZAZIONE: ' + 
-                (error === 'access_denied' ? 'ACCESSO NEGATO' : error.toUpperCase());
-        } else {
-            document.getElementById('error').textContent = 
-                'SEGNALE NON TROVATO: TOKEN NON RICEVUTO';
+            // Estrae il token dall'URL
+            const hash = window.location.hash;
+            log('Hash:', hash);
+
+            const params = new URLSearchParams(hash.slice(1));
+            log('Parsed params:', Object.fromEntries(params));
+
+            const error = new URLSearchParams(window.location.search).get('error');
+            log('Error from query:', error);
+
+            const token = hash.match(/access_token=([^&]*)/)?.[1];
+            log('Extracted token:', token ? 'Found' : 'Not found');
+
+            if (token) {
+                log('Token found, saving to localStorage');
+                // Salva il token
+                localStorage.setItem('spotify_token', token);
+                
+                // Salva anche la data di scadenza (1 ora da ora)
+                const expiresIn = parseInt(hash.match(/expires_in=([^&]*)/)?.[1] || '3600');
+                const expirationTime = Date.now() + (expiresIn * 1000);
+                localStorage.setItem('spotify_token_expiration', expirationTime.toString());
+                
+                log('Token saved, redirecting to homepage');
+                // Redirect alla homepage dopo aver salvato il token
+                window.location.href = '/';
+            } else if (error) {
+                const errorMessage = 'ERRORE DI SINTONIZZAZIONE: ' + 
+                    (error === 'access_denied' ? 'ACCESSO NEGATO' : error.toUpperCase());
+                log('Error detected:', errorMessage);
+                document.getElementById('error').textContent = errorMessage;
+            } else {
+                const errorMessage = 'SEGNALE NON TROVATO: TOKEN NON RICEVUTO';
+                log('No token or error found:', errorMessage);
+                document.getElementById('error').textContent = errorMessage;
+            }
+        } catch (err) {
+            const errorMessage = `ERRORE CRITICO:\n${err.message}\n${err.stack}`;
+            log('Critical error:', err);
+            document.getElementById('error').textContent = errorMessage;
         }
     </script>
 </body>
