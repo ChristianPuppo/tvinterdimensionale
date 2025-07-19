@@ -408,3 +408,135 @@ select:focus {
 #playlistSelect:focus {
     animation: selectGlow 2s infinite;
 } 
+
+/* Custom dropdown */
+.custom-select {
+    position: relative;
+    font-family: 'Press Start 2P', cursive;
+    min-width: 200px;
+}
+
+.select-selected {
+    background-color: #000;
+    border: 3px solid #fff;
+    padding: 10px 35px 10px 10px;
+    font-size: 12px;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #fff,
+        0 0 0 9px #000;
+}
+
+.select-selected:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+    border-color: #fff transparent transparent transparent;
+    transform: translateY(-50%);
+}
+
+.select-selected.select-arrow-active:after {
+    border-color: transparent transparent #fff transparent;
+    top: 40%;
+}
+
+.select-items {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    margin-top: 10px;
+    background: #000;
+    border: 3px solid #fff;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #fff,
+        0 0 0 9px #000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.select-items::-webkit-scrollbar {
+    width: 8px;
+}
+
+.select-items::-webkit-scrollbar-track {
+    background: #000;
+    border-left: 2px solid #fff;
+}
+
+.select-items::-webkit-scrollbar-thumb {
+    background: #fff;
+    border: 2px solid #000;
+}
+
+.select-hide {
+    display: none;
+}
+
+.select-items div {
+    padding: 10px;
+    font-size: 12px;
+    color: #fff;
+    cursor: pointer;
+    border-bottom: 2px solid #fff;
+    transition: all 0.2s ease;
+}
+
+.select-items div:last-child {
+    border-bottom: none;
+}
+
+.select-items div:hover {
+    background-color: #0f0;
+    color: #000;
+}
+
+/* Glitch effect for dropdown */
+.select-selected:hover {
+    border-color: #0f0;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #0f0,
+        0 0 0 9px #000;
+}
+
+@keyframes dropdownGlitch {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    50% { transform: translateX(2px); }
+    75% { transform: translateX(-1px); }
+    100% { transform: translateX(0); }
+}
+
+.select-items div:hover {
+    animation: dropdownGlitch 0.2s ease;
+}
+
+/* Custom scrollbar animation */
+@keyframes scrollGlow {
+    0% { border-color: #fff; }
+    50% { border-color: #0f0; }
+    100% { border-color: #fff; }
+}
+
+.select-items::-webkit-scrollbar-thumb:hover {
+    animation: scrollGlow 1s infinite;
+    background: #0f0;
+}
+
+/* Playlist controls layout */
+.playlist-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
+} 

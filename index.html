@@ -28,10 +28,9 @@
                     <span class="spotify-icon">🎵</span> Connect with Spotify
                 </button>
                 <div id="playlistSection" class="hidden playlist-controls">
-                    <div class="playlist-select-container">
-                        <select id="playlistSelect">
-                            <option value="">Select a playlist...</option>
-                        </select>
+                    <div class="custom-select">
+                        <div class="select-selected">Select a playlist...</div>
+                        <div class="select-items select-hide"></div>
                     </div>
                     <button id="loadButton">Load Playlist</button>
                 </div>
@@ -243,19 +242,71 @@
                 const data = await response.json();
                 log('Loaded playlists:', { count: data.items.length });
 
-                const select = document.getElementById('playlistSelect');
-                select.innerHTML = '<option value="">Select a playlist...</option>';
+                const selectItems = document.querySelector('.select-items');
+                const selectSelected = document.querySelector('.select-selected');
+                selectItems.innerHTML = '';
+
+                // Add default option
+                const defaultDiv = document.createElement('div');
+                defaultDiv.textContent = 'Select a playlist...';
+                defaultDiv.dataset.value = '';
+                selectItems.appendChild(defaultDiv);
+
+                // Add playlist options
                 data.items.forEach(playlist => {
-                    const option = document.createElement('option');
-                    option.value = playlist.id;
-                    option.textContent = playlist.name;
-                    select.appendChild(option);
+                    const div = document.createElement('div');
+                    div.textContent = playlist.name;
+                    div.dataset.value = playlist.id;
+                    selectItems.appendChild(div);
                 });
+
+                // Event listeners for custom select
+                selectSelected.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    closeAllSelect(this);
+                    this.nextElementSibling.classList.toggle('select-hide');
+                    this.classList.toggle('select-arrow-active');
+                    showGlitchEffect();
+                });
+
+                selectItems.querySelectorAll('div').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        const selected = this.parentNode.previousElementSibling;
+                        selected.textContent = this.textContent;
+                        selected.dataset.value = this.dataset.value;
+                        this.parentNode.classList.add('select-hide');
+                        selected.classList.remove('select-arrow-active');
+                        showGlitchEffect();
+                    });
+                });
+
+                document.addEventListener('click', closeAllSelect);
+
             } catch (error) {
                 log('Error loading playlists:', error.message);
                 console.error('Playlist loading error:', error);
                 if (error.message.includes('No token available')) {
                     handleLogin();
+                }
+            }
+        }
+
+        function closeAllSelect(elmnt) {
+            const selectItems = document.getElementsByClassName('select-items');
+            const selectSelected = document.getElementsByClassName('select-selected');
+            const arr = [];
+            
+            for (let i = 0; i < selectSelected.length; i++) {
+                if (elmnt == selectSelected[i]) {
+                    arr.push(i);
+                } else {
+                    selectSelected[i].classList.remove('select-arrow-active');
+                }
+            }
+            
+            for (let i = 0; i < selectItems.length; i++) {
+                if (arr.indexOf(i)) {
+                    selectItems[i].classList.add('select-hide');
                 }
             }
         }
@@ -269,7 +320,9 @@
 
         async function loadSelectedPlaylist() {
             try {
-                const playlistId = document.getElementById('playlistSelect').value;
+                const selected = document.querySelector('.select-selected');
+                const playlistId = selected.dataset.value;
+                
                 if (!playlistId) {
                     log('No playlist selected');
                     return;
