@@ -1,11 +1,14 @@
 const config = {
-    // Replace with your Spotify API credentials
+    // Spotify API credentials
     spotify: {
+        // Client ID from Spotify Developer Dashboard
         clientId: '7a82dcab533b4f3c8d440bb23f82c6b6'
+        // Client Secret (for future authorization code flow implementation):
+        // 9cf7d438efd74c3a8ec1875dc47c22b4
     },
-    // Replace with your YouTube Data API key
+    // YouTube Data API key (to be configured)
     youtube: {
-        apiKey: 'YOUR_YOUTUBE_API_KEY' // Configureremo questo dopo
+        apiKey: 'YOUR_YOUTUBE_API_KEY'
     }
 };
 
@@ -19,5 +22,4 @@ const fallbackPlaylist = [
         title: "Example Song 2",
         artist: "Artist 2"
     }
-    // Add more songs as needed
 ]; 
