@@ -14,6 +14,20 @@
                 <div class="scanlines"></div>
                 <div class="glitch-effect"></div>
                 <div id="player"></div>
+                <style id="youtube-styles">
+                    .ytp-chrome-top,
+                    .ytp-chrome-bottom,
+                    .ytp-watermark,
+                    .ytp-title,
+                    .ytp-show-cards-title,
+                    .ytp-gradient-top,
+                    .ytp-gradient-bottom,
+                    .ytp-ce-element {
+                        display: none !important;
+                        opacity: 0 !important;
+                        visibility: hidden !important;
+                    }
+                </style>
             </div>
             <div class="channel-info">WAITING FOR SIGNAL...</div>
             <div class="rec-status">
@@ -30,6 +44,10 @@
                 <div id="playlistSection" class="hidden playlist-controls">
                     <div class="custom-select">
                         <div class="select-selected">Select a playlist...</div>
+                        <div class="select-items select-hide"></div>
+                    </div>
+                    <div class="custom-select tracks-select">
+                        <div class="select-selected">Select a track...</div>
                         <div class="select-items select-hide"></div>
                     </div>
                     <button id="loadButton">Load Playlist</button>
@@ -321,7 +339,7 @@
 
         async function loadSelectedPlaylist() {
             try {
-                const selected = document.querySelector('.select-selected');
+                const selected = document.querySelector('.custom-select:not(.tracks-select) .select-selected');
                 const playlistId = selected.dataset.value;
                 
                 if (!playlistId) {
@@ -351,6 +369,10 @@
                 currentTrackIndex = 0;
                 document.getElementById('prevChannel').disabled = false;
                 document.getElementById('nextChannel').disabled = false;
+                
+                // Aggiorna il dropdown delle tracce
+                updateTracksDropdown();
+                
                 await playCurrentTrack();
             } catch (error) {
                 log('Error loading playlist:', error.message);
@@ -426,14 +448,25 @@
                 const screen = document.querySelector('.screen');
                 const intermissionOverlay = document.createElement('div');
                 intermissionOverlay.className = 'intermission-overlay';
-                intermissionOverlay.innerHTML = 'PLEASE STAND BY';
                 
-                // Aggiungi suono intermission
-                const intermissionSound = new Audio('data:audio/wav;base64,UklGRn4AAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA5/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/ef95/3n/eQ==');
-                intermissionSound.volume = 0.5;
+                // Creiamo il pattern a scacchi
+                const pattern = document.createElement('div');
+                pattern.className = 'intermission-pattern';
+                
+                // Aggiungiamo il testo
+                const text = document.createElement('div');
+                text.className = 'intermission-text';
+                text.innerHTML = 'PLEASE<br>STAND<br>BY';
+                
+                intermissionOverlay.appendChild(pattern);
+                intermissionOverlay.appendChild(text);
+                
+                // Beep sound
+                const beepSound = new Audio('data:audio/wav;base64,UklGRl4BAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YToBAACAgICAgICAgICAgICAgICAgICAgICAgICBgYGBgYGBgoKCgoKCgoODg4ODg4OEhISEhISEhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhISEhISEhIODg4ODg4OCgoKCgoKCgYGBgYGBgYCAgICAgICAgICAgICAgICAgICAgICAgH9/f39/f39+fn5+fn5+fX19fX19fXx8fHx8fHx7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t8fHx8fHx8fX19fX19fX5+fn5+fn5/f39/f39/gICAgICAgICAgICAgICAgICAgICAgICAgYGBgYGBgYKCgoKCgoKDg4ODg4ODhISEhISEhIWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhISEhISEhIODg4ODg4OCgoKCgoKCgYGBgYGBgYCAgICAgIAAAAA=');
+                beepSound.volume = 0.3;
                 
                 screen.appendChild(intermissionOverlay);
-                intermissionSound.play();
+                beepSound.play();
                 
                 setTimeout(() => {
                     screen.removeChild(intermissionOverlay);
@@ -537,6 +570,79 @@
             const seconds = (recordingTime % 60).toString().padStart(2, '0');
             recTimer.textContent = `${hours}:${minutes}:${seconds}`;
         }, 1000);
+
+        // Aggiorna la funzione showIntermission
+        function showIntermission() {
+            return new Promise(resolve => {
+                const screen = document.querySelector('.screen');
+                const intermissionOverlay = document.createElement('div');
+                intermissionOverlay.className = 'intermission-overlay';
+                
+                // Creiamo il pattern a scacchi
+                const pattern = document.createElement('div');
+                pattern.className = 'intermission-pattern';
+                
+                // Aggiungiamo il testo
+                const text = document.createElement('div');
+                text.className = 'intermission-text';
+                text.innerHTML = 'PLEASE<br>STAND<br>BY';
+                
+                intermissionOverlay.appendChild(pattern);
+                intermissionOverlay.appendChild(text);
+                
+                // Beep sound
+                const beepSound = new Audio('data:audio/wav;base64,UklGRl4BAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YToBAACAgICAgICAgICAgICAgICAgICAgICAgICBgYGBgYGBgoKCgoKCgoODg4ODg4OEhISEhISEhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhISEhISEhIODg4ODg4OCgoKCgoKCgYGBgYGBgYCAgICAgICAgICAgICAgICAgICAgICAgH9/f39/f39+fn5+fn5+fX19fX19fXx8fHx8fHx7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3t8fHx8fHx8fX19fX19fX5+fn5+fn5/f39/f39/gICAgICAgICAgICAgICAgICAgICAgICAgYGBgYGBgYKCgoKCgoKDg4ODg4ODhISEhISEhIWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhISEhISEhIODg4ODg4OCgoKCgoKCgYGBgYGBgYCAgICAgIAAAAA=');
+                beepSound.volume = 0.3;
+                
+                screen.appendChild(intermissionOverlay);
+                beepSound.play();
+                
+                setTimeout(() => {
+                    screen.removeChild(intermissionOverlay);
+                    resolve();
+                }, 2000);
+            });
+        }
+
+        // Aggiunta del dropdown per le tracce
+        function updateTracksDropdown() {
+            const tracksSelect = document.querySelector('.tracks-select .select-items');
+            const tracksSelected = document.querySelector('.tracks-select .select-selected');
+            tracksSelect.innerHTML = '';
+
+            currentPlaylist.forEach((track, index) => {
+                const div = document.createElement('div');
+                div.textContent = `${track.title} - ${track.artist}`;
+                div.dataset.index = index;
+                div.addEventListener('click', function() {
+                    const selected = this.parentNode.previousElementSibling;
+                    selected.textContent = this.textContent;
+                    selected.dataset.index = this.dataset.index;
+                    this.parentNode.classList.add('select-hide');
+                    selected.classList.remove('select-arrow-active');
+                    currentTrackIndex = parseInt(this.dataset.index);
+                    playCurrentTrack();
+                });
+                tracksSelect.appendChild(div);
+            });
+
+            // Aggiorna il testo selezionato
+            if (currentPlaylist.length > 0) {
+                const currentTrack = currentPlaylist[currentTrackIndex];
+                tracksSelected.textContent = `${currentTrack.title} - ${currentTrack.artist}`;
+                tracksSelected.dataset.index = currentTrackIndex;
+            }
+
+            // Aggiungi event listener per il dropdown
+            tracksSelected.addEventListener('click', function(e) {
+                e.stopPropagation();
+                closeAllSelect(this);
+                this.nextElementSibling.classList.toggle('select-hide');
+                this.classList.toggle('select-arrow-active');
+                showGlitchEffect();
+            });
+        }
+
     </script>
 </body>
 </html> 
