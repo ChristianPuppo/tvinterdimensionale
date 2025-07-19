@@ -36,6 +36,7 @@
     <div class="message">AUTHENTICATING...</div>
     <div id="debug" class="debug"></div>
 
+    <script src="spotify.js"></script>
     <script>
         function log(message, data = null) {
             const debugElement = document.getElementById('debug');
@@ -48,56 +49,37 @@
             console.log(message, data);
         }
 
-        function handleCallback() {
+        async function handleCallback() {
             const messageElement = document.querySelector('.message');
             
             try {
                 log('Starting authentication process');
                 log('Full URL:', window.location.href);
-                log('Hash:', window.location.hash);
                 log('Search:', window.location.search);
 
-                // Check URL hash (for implicit flow)
-                if (window.location.hash) {
-                    const hash = window.location.hash.substring(1);
-                    const params = new URLSearchParams(hash);
-                    const accessToken = params.get('access_token');
-                    const error = params.get('error');
-
-                    log('Hash parameters:', Object.fromEntries(params));
-
-                    if (error) {
-                        throw new Error(`Hash error: ${error}`);
-                    }
-
-                    if (accessToken) {
-                        log('Found access token in hash');
-                        localStorage.setItem('spotify_token', accessToken);
-                        messageElement.textContent = 'AUTHENTICATION SUCCESSFUL (HASH)';
-                        setTimeout(() => window.location.href = '/', 2000);
-                        return;
-                    }
-                }
-
-                // Check URL search params (for authorization code flow)
                 const urlParams = new URLSearchParams(window.location.search);
                 const code = urlParams.get('code');
                 const error = urlParams.get('error');
 
-                log('Search parameters:', Object.fromEntries(urlParams));
+                log('URL parameters:', Object.fromEntries(urlParams));
 
                 if (error) {
-                    throw new Error(`Search error: ${error}`);
+                    throw new Error(`Authentication error: ${error}`);
                 }
 
-                if (code) {
-                    log('Found authorization code');
-                    messageElement.textContent = 'ERROR: UNEXPECTED CODE FLOW';
-                    setTimeout(() => window.location.href = '/', 2000);
-                    return;
+                if (!code) {
+                    throw new Error('No authorization code found');
                 }
 
-                throw new Error('No token or code found in URL');
+                log('Exchanging code for token');
+                await spotifyHandler.getAccessToken(code);
+                
+                messageElement.textContent = 'AUTHENTICATION SUCCESSFUL';
+                log('Successfully authenticated, redirecting...');
+                
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
             } catch (error) {
                 log('Authentication error:', error);
                 messageElement.textContent = 'ERROR: ' + error.message.toUpperCase();

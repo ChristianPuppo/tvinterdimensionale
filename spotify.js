@@ -2,7 +2,6 @@ class SpotifyHandler {
     constructor() {
         this.playlist = [];
         this.clientId = '7a82dcab533b4f3c8d440bb23f82c6b6';
-        // Use the production URL instead of dynamic preview URLs
         this.redirectUri = 'https://tvinterdimensionale.vercel.app/callback.html';
     }
 
@@ -14,7 +13,7 @@ class SpotifyHandler {
 
         const params = new URLSearchParams({
             client_id: this.clientId,
-            response_type: 'token',
+            response_type: 'code',
             redirect_uri: this.redirectUri,
             scope: 'playlist-read-private playlist-read-collaborative',
             show_dialog: true
@@ -23,6 +22,48 @@ class SpotifyHandler {
         const authUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
         console.log('Generated auth URL:', authUrl);
         return authUrl;
+    }
+
+    async getAccessToken(code) {
+        console.log('Getting access token for code:', code);
+
+        const params = new URLSearchParams({
+            grant_type: 'authorization_code',
+            code: code,
+            redirect_uri: this.redirectUri,
+            client_id: this.clientId
+        });
+
+        try {
+            const response = await fetch('https://accounts.spotify.com/api/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: params.toString()
+            });
+
+            const data = await response.json();
+            console.log('Token response:', {
+                ok: response.ok,
+                status: response.status,
+                hasAccessToken: !!data.access_token
+            });
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to get access token');
+            }
+
+            localStorage.setItem('spotify_token', data.access_token);
+            if (data.refresh_token) {
+                localStorage.setItem('spotify_refresh_token', data.refresh_token);
+            }
+
+            return data.access_token;
+        } catch (error) {
+            console.error('Token exchange error:', error);
+            throw error;
+        }
     }
 
     isAuthenticated() {
@@ -55,6 +96,7 @@ class SpotifyHandler {
                 // Token expired, redirect to login
                 console.log('Token expired, redirecting to login');
                 localStorage.removeItem('spotify_token');
+                localStorage.removeItem('spotify_refresh_token');
                 window.location.href = this.getAuthUrl();
                 return;
             }
