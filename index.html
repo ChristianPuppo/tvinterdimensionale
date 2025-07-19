@@ -24,7 +24,7 @@
         <div class="controls">
             <button id="prevChannel" disabled>Channel -</button>
             <div class="spotify-section">
-                <button id="loginButton" class="spotify-button">
+                <button onclick="handleLogin()" class="spotify-button">
                     <span class="spotify-icon">🎵</span> Connect with Spotify
                 </button>
                 <div id="playlistSection" class="hidden">
@@ -40,81 +40,122 @@
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
+        // Debug logging
+        function log(message, data = null) {
+            const timestamp = new Date().toISOString();
+            const logMessage = `[${timestamp}] ${message}`;
+            console.log(logMessage, data);
+            updateChannelInfo(message);
+        }
+
+        function updateChannelInfo(text) {
+            document.querySelector('.channel-info').textContent = text;
+        }
+
         // Spotify configuration
         const clientId = '7a82dcab533b4f3c8d440bb23f82c6b6';
-        const redirectUri = 'https://tvinterdimensionale.vercel.app';
+        const redirectUri = window.location.origin;
 
-        // Check if we're returning from Spotify auth
-        const hash = window.location.hash;
-        if (hash) {
-            const params = new URLSearchParams(hash.substring(1));
-            const accessToken = params.get('access_token');
-            if (accessToken) {
-                localStorage.setItem('spotify_token', accessToken);
-                // Clear the hash
-                window.location.hash = '';
-                handleAuthentication();
+        // Handle login
+        function handleLogin() {
+            try {
+                log('Initiating Spotify login...');
+                const params = new URLSearchParams({
+                    client_id: clientId,
+                    response_type: 'token',
+                    redirect_uri: redirectUri,
+                    scope: 'playlist-read-private playlist-read-collaborative',
+                    show_dialog: true
+                });
+
+                const authUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
+                log('Generated auth URL:', authUrl);
+                window.location.href = authUrl;
+            } catch (error) {
+                log('Login error:', error.message);
+                console.error('Login error:', error);
             }
         }
 
-        // UI Elements
-        const loginButton = document.getElementById('loginButton');
-        const playlistSection = document.getElementById('playlistSection');
-        const playlistSelect = document.getElementById('playlistSelect');
-        const loadButton = document.getElementById('loadButton');
-        const channelInfo = document.querySelector('.channel-info');
-        const prevButton = document.getElementById('prevChannel');
-        const nextButton = document.getElementById('nextChannel');
+        // Check for auth callback
+        window.addEventListener('load', () => {
+            log('Checking for auth callback...');
+            const hash = window.location.hash;
+            if (hash) {
+                log('Found hash in URL:', hash);
+                try {
+                    const params = new URLSearchParams(hash.substring(1));
+                    const accessToken = params.get('access_token');
+                    const error = params.get('error');
 
-        // Event Listeners
-        loginButton.addEventListener('click', () => {
-            const params = new URLSearchParams({
-                client_id: clientId,
-                response_type: 'token',
-                redirect_uri: redirectUri,
-                scope: 'playlist-read-private playlist-read-collaborative',
-                show_dialog: true
-            });
-            window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
+                    if (error) {
+                        throw new Error(`Authentication error: ${error}`);
+                    }
+
+                    if (accessToken) {
+                        log('Got access token');
+                        localStorage.setItem('spotify_token', accessToken);
+                        window.location.hash = '';
+                        handleAuthentication();
+                    } else {
+                        log('No access token found in hash');
+                    }
+                } catch (error) {
+                    log('Error parsing hash:', error.message);
+                    console.error('Hash parsing error:', error);
+                }
+            } else {
+                log('No hash found, checking for stored token');
+                if (localStorage.getItem('spotify_token')) {
+                    handleAuthentication();
+                }
+            }
         });
 
-        loadButton.addEventListener('click', loadSelectedPlaylist);
-        prevButton.addEventListener('click', playPreviousTrack);
-        nextButton.addEventListener('click', playNextTrack);
-
-        // Check if already authenticated
-        if (localStorage.getItem('spotify_token')) {
-            handleAuthentication();
-        }
-
         async function handleAuthentication() {
-            loginButton.style.display = 'none';
-            playlistSection.classList.remove('hidden');
-            await loadPlaylists();
+            try {
+                log('Handling authentication...');
+                document.querySelector('.spotify-button').style.display = 'none';
+                document.getElementById('playlistSection').classList.remove('hidden');
+                await loadPlaylists();
+            } catch (error) {
+                log('Authentication handling error:', error.message);
+                console.error('Auth handling error:', error);
+            }
         }
 
         async function loadPlaylists() {
             try {
+                log('Loading playlists...');
+                const token = localStorage.getItem('spotify_token');
+                if (!token) {
+                    throw new Error('No token found');
+                }
+
                 const response = await fetch('https://api.spotify.com/v1/me/playlists', {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('spotify_token')}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to load playlists');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
-                playlistSelect.innerHTML = '<option value="">Select a playlist...</option>';
+                log('Loaded playlists:', { count: data.items.length });
+
+                const select = document.getElementById('playlistSelect');
+                select.innerHTML = '<option value="">Select a playlist...</option>';
                 data.items.forEach(playlist => {
                     const option = document.createElement('option');
                     option.value = playlist.id;
                     option.textContent = playlist.name;
-                    playlistSelect.appendChild(option);
+                    select.appendChild(option);
                 });
             } catch (error) {
-                console.error('Error loading playlists:', error);
+                log('Error loading playlists:', error.message);
+                console.error('Playlist loading error:', error);
                 localStorage.removeItem('spotify_token');
                 window.location.reload();
             }
@@ -123,19 +164,28 @@
         let currentPlaylist = [];
         let currentTrackIndex = 0;
 
-        async function loadSelectedPlaylist() {
-            const playlistId = playlistSelect.value;
-            if (!playlistId) return;
+        document.getElementById('loadButton').addEventListener('click', loadSelectedPlaylist);
+        document.getElementById('prevChannel').addEventListener('click', playPreviousTrack);
+        document.getElementById('nextChannel').addEventListener('click', playNextTrack);
 
+        async function loadSelectedPlaylist() {
             try {
+                const playlistId = document.getElementById('playlistSelect').value;
+                if (!playlistId) {
+                    log('No playlist selected');
+                    return;
+                }
+
+                log('Loading selected playlist:', playlistId);
+                const token = localStorage.getItem('spotify_token');
                 const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('spotify_token')}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to load playlist');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
@@ -144,18 +194,20 @@
                     artist: item.track.artists[0].name
                 }));
 
+                log('Playlist loaded:', { trackCount: currentPlaylist.length });
                 currentTrackIndex = 0;
-                prevButton.disabled = false;
-                nextButton.disabled = false;
+                document.getElementById('prevChannel').disabled = false;
+                document.getElementById('nextChannel').disabled = false;
                 await playCurrentTrack();
             } catch (error) {
-                console.error('Error loading playlist:', error);
-                channelInfo.textContent = 'ERROR LOADING PLAYLIST';
+                log('Error loading playlist:', error.message);
+                console.error('Playlist loading error:', error);
             }
         }
 
         let youtubePlayer;
         function onYouTubeIframeAPIReady() {
+            log('YouTube API ready');
             youtubePlayer = new YT.Player('player', {
                 height: '100%',
                 width: '100%',
@@ -176,29 +228,48 @@
         }
 
         async function searchYouTubeVideo(title, artist) {
-            const query = encodeURIComponent(`${title} ${artist} official music video`);
-            const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&type=video&q=${query}&key=YOUR_YOUTUBE_API_KEY`);
-            const data = await response.json();
-            return data.items[0]?.id?.videoId;
+            try {
+                log('Searching YouTube video:', { title, artist });
+                const query = encodeURIComponent(`${title} ${artist} official music video`);
+                const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=id&type=video&q=${query}&key=YOUR_YOUTUBE_API_KEY`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const videoId = data.items[0]?.id?.videoId;
+                log('Found video:', { videoId });
+                return videoId;
+            } catch (error) {
+                log('YouTube search error:', error.message);
+                console.error('YouTube search error:', error);
+                return null;
+            }
         }
 
         async function playCurrentTrack() {
-            const track = currentPlaylist[currentTrackIndex];
-            if (!track) return;
-
-            channelInfo.textContent = `CHANNEL ${currentTrackIndex + 1} - ${track.title}`;
-            showGlitchEffect();
-
             try {
+                const track = currentPlaylist[currentTrackIndex];
+                if (!track) {
+                    log('No track to play');
+                    return;
+                }
+
+                log('Playing track:', track);
+                updateChannelInfo(`CHANNEL ${currentTrackIndex + 1} - ${track.title}`);
+                showGlitchEffect();
+
                 const videoId = await searchYouTubeVideo(track.title, track.artist);
                 if (videoId) {
                     youtubePlayer.loadVideoById(videoId);
                 } else {
-                    channelInfo.textContent = 'VIDEO NOT FOUND';
+                    updateChannelInfo('VIDEO NOT FOUND');
                 }
             } catch (error) {
-                console.error('Error playing track:', error);
-                channelInfo.textContent = 'PLAYBACK ERROR';
+                log('Error playing track:', error.message);
+                console.error('Playback error:', error);
+                updateChannelInfo('PLAYBACK ERROR');
             }
         }
 
@@ -223,8 +294,8 @@
         }
 
         function onPlayerError(event) {
-            console.error('Player error:', event);
-            channelInfo.textContent = 'VIDEO PLAYBACK ERROR';
+            log('YouTube player error:', event.data);
+            updateChannelInfo('VIDEO PLAYBACK ERROR');
             setTimeout(playNextTrack, 3000);
         }
 
