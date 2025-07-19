@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vintage TV Music Player</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Google Fonts - Press Start 2P for retro text -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="tv-container">
+        <div class="tv-frame">
+            <div class="screen">
+                <div class="scanlines"></div>
+                <div class="glitch-effect"></div>
+                <div id="player"></div>
+            </div>
+            <div class="channel-info">CHANNEL 1 - WAITING FOR SIGNAL</div>
+            <div class="rec-status">
+                <span class="rec-dot">REC</span>
+                <span class="rec-timer">00:00:00</span>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="prevChannel">Channel -</button>
+            <div class="playlist-input">
+                <input type="text" id="playlistUrl" placeholder="Enter Spotify Playlist URL">
+                <button id="loadPlaylist">Load Playlist</button>
+            </div>
+            <button id="nextChannel">Channel +</button>
+        </div>
+    </div>
+
+    <!-- Load YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <!-- Load Spotify Web Playback SDK -->
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <!-- Custom Scripts -->
+    <script src="config.js"></script>
+    <script src="spotify.js"></script>
+    <script src="youtube.js"></script>
+    <script src="app.js"></script>
+</body>
+</html> 
