@@ -47,8 +47,14 @@ class VintageTVApp {
         }
     }
 
-    handleSpotifyLogin() {
-        window.location.href = spotifyHandler.getAuthUrl();
+    async handleSpotifyLogin() {
+        try {
+            const authUrl = await spotifyHandler.getAuthUrl();
+            window.location.href = authUrl;
+        } catch (error) {
+            console.error('Failed to get auth URL:', error);
+            this.updateChannelInfo('ERROR - AUTH FAILED');
+        }
     }
 
     showLoginButton() {
@@ -66,7 +72,7 @@ class VintageTVApp {
     async loadPlaylist() {
         try {
             if (!spotifyHandler.isAuthenticated()) {
-                this.handleSpotifyLogin();
+                await this.handleSpotifyLogin();
                 return;
             }
 
@@ -89,7 +95,7 @@ class VintageTVApp {
         } catch (error) {
             console.error('Failed to load playlist:', error);
             if (error.message === 'Not authenticated') {
-                this.handleSpotifyLogin();
+                await this.handleSpotifyLogin();
             } else {
                 this.updateChannelInfo('ERROR - INVALID PLAYLIST URL');
             }
