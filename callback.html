@@ -28,6 +28,8 @@
             max-width: 80%;
             word-break: break-all;
             text-align: center;
+            white-space: pre-wrap;
+            font-family: monospace;
         }
         .retry-button {
             background: #1DB954;
@@ -56,19 +58,34 @@
     <button id="retryButton" class="retry-button" onclick="window.location.href='/'">RETRY</button>
     <script src="spotify.js"></script>
     <script>
-        async function handleCallback() {
+        function log(message, data = null) {
             const debugElement = document.getElementById('debug');
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const logMessage = `[${timestamp}] ${message}${data ? '\n' + JSON.stringify(data, null, 2) : ''}`;
+            console.log(logMessage);
+            debugElement.textContent += (debugElement.textContent ? '\n\n' : '') + logMessage;
+        }
+
+        async function handleCallback() {
             const messageElement = document.querySelector('.message');
             const retryButton = document.getElementById('retryButton');
             
             try {
-                // Log the full URL for debugging
-                debugElement.textContent = 'Processing authentication...';
+                log('Starting authentication process');
+                log('SpotifyHandler instance:', {
+                    clientId: spotifyHandler.clientId,
+                    redirectUri: spotifyHandler.redirectUri
+                });
 
                 // Check for authorization code
                 const urlParams = new URLSearchParams(window.location.search);
                 const code = urlParams.get('code');
                 const error = urlParams.get('error');
+
+                log('URL parameters:', {
+                    code: code ? code.substring(0, 10) + '...' : null,
+                    error: error
+                });
 
                 if (error) {
                     throw new Error(error);
@@ -79,19 +96,22 @@
                 }
 
                 // Try to exchange the code for a token
+                log('Exchanging code for token...');
                 await spotifyHandler.getAccessToken(code);
                 
                 messageElement.textContent = 'AUTHENTICATION SUCCESSFUL';
-                debugElement.textContent = 'Redirecting to home page...';
+                log('Authentication successful, redirecting...');
                 
                 setTimeout(() => {
                     window.location.href = '/';
-                }, 1000);
+                }, 2000);
             } catch (error) {
                 messageElement.textContent = 'ERROR: ' + error.message.toUpperCase();
-                debugElement.textContent = 'Something went wrong. Please try again.';
+                log('Authentication error:', {
+                    message: error.message,
+                    stack: error.stack
+                });
                 retryButton.style.display = 'block';
-                console.error('Authentication error:', error);
             }
         }
 

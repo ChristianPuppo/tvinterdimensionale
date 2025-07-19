@@ -3,52 +3,61 @@ class SpotifyHandler {
         this.playlist = [];
         this.clientId = '7a82dcab533b4f3c8d440bb23f82c6b6';
         this.redirectUri = 'https://tvinterdimensionale-5wnf1jt0p-christians-projects-524bbc11.vercel.app/callback.html';
+        console.log('SpotifyHandler initialized with:', {
+            clientId: this.clientId,
+            redirectUri: this.redirectUri
+        });
     }
 
     getAuthUrl() {
         const scopes = ['playlist-read-private', 'playlist-read-collaborative'];
-        
-        return 'https://accounts.spotify.com/authorize' +
+        const authUrl = 'https://accounts.spotify.com/authorize' +
             '?client_id=' + encodeURIComponent(this.clientId) +
             '&redirect_uri=' + encodeURIComponent(this.redirectUri) +
             '&scope=' + encodeURIComponent(scopes.join(' ')) +
             '&response_type=code' +
             '&show_dialog=true';
+        
+        console.log('Generated auth URL:', authUrl);
+        return authUrl;
     }
 
     isAuthenticated() {
-        return !!localStorage.getItem('spotify_token');
+        const token = localStorage.getItem('spotify_token');
+        console.log('Checking authentication:', { isAuthenticated: !!token });
+        return !!token;
     }
 
     async getAccessToken(code) {
+        console.log('Getting access token for code:', code);
         try {
-            const clientSecret = 'b0d2e4c1d0c94e0d9c9e4b0d2e4c1d0c'; // Sostituisci con il tuo client secret
-            const base64Credentials = btoa(`${this.clientId}:${clientSecret}`);
-            
             const response = await fetch('https://accounts.spotify.com/api/token', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
-                    'Authorization': `Basic ${base64Credentials}`
                 },
                 body: new URLSearchParams({
                     grant_type: 'authorization_code',
                     code: code,
-                    redirect_uri: this.redirectUri
+                    redirect_uri: this.redirectUri,
+                    client_id: this.clientId
                 }).toString()
             });
 
+            console.log('Token response status:', response.status);
+            const data = await response.json();
+            console.log('Token response data:', data);
+
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`Failed to get token: ${errorData.error}`);
+                throw new Error(data.error || 'Failed to get token');
             }
 
-            const data = await response.json();
             if (data.access_token) {
                 localStorage.setItem('spotify_token', data.access_token);
                 if (data.refresh_token) {
                     localStorage.setItem('spotify_refresh_token', data.refresh_token);
                 }
+                console.log('Successfully stored tokens');
                 return data.access_token;
             }
             throw new Error('No access token in response');
@@ -59,27 +68,27 @@ class SpotifyHandler {
     }
 
     async refreshToken() {
+        console.log('Attempting to refresh token');
         const refreshToken = localStorage.getItem('spotify_refresh_token');
         if (!refreshToken) {
             throw new Error('No refresh token available');
         }
 
-        const clientSecret = 'b0d2e4c1d0c94e0d9c9e4b0d2e4c1d0c'; // Sostituisci con il tuo client secret
-        const base64Credentials = btoa(`${this.clientId}:${clientSecret}`);
-
         const response = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': `Basic ${base64Credentials}`
             },
             body: new URLSearchParams({
                 grant_type: 'refresh_token',
-                refresh_token: refreshToken
+                refresh_token: refreshToken,
+                client_id: this.clientId
             }).toString()
         });
 
         const data = await response.json();
+        console.log('Refresh token response:', data);
+
         if (data.access_token) {
             localStorage.setItem('spotify_token', data.access_token);
             return data.access_token;
@@ -89,7 +98,7 @@ class SpotifyHandler {
 
     async fetchPlaylist(playlistUrl) {
         try {
-            // Extract playlist ID from URL
+            console.log('Fetching playlist:', playlistUrl);
             const playlistId = playlistUrl.split('playlist/')[1].split('?')[0];
             let token = localStorage.getItem('spotify_token');
             
@@ -103,8 +112,10 @@ class SpotifyHandler {
                 }
             });
 
+            console.log('Playlist response status:', response.status);
+
             if (response.status === 401) {
-                // Token expired, try to refresh
+                console.log('Token expired, attempting refresh');
                 try {
                     token = await this.refreshToken();
                     response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
@@ -113,7 +124,7 @@ class SpotifyHandler {
                         }
                     });
                 } catch (refreshError) {
-                    // If refresh fails, redirect to login
+                    console.error('Refresh failed:', refreshError);
                     localStorage.removeItem('spotify_token');
                     localStorage.removeItem('spotify_refresh_token');
                     window.location.href = this.getAuthUrl();
@@ -122,6 +133,7 @@ class SpotifyHandler {
             }
 
             const data = await response.json();
+            console.log('Playlist data received:', data);
             
             this.playlist = data.items.map(item => ({
                 title: item.track.name,
@@ -152,4 +164,6 @@ class SpotifyHandler {
     }
 }
 
-const spotifyHandler = new SpotifyHandler(); 
+// Create the handler instance and expose it globally for debugging
+const spotifyHandler = new SpotifyHandler();
+window.spotifyHandler = spotifyHandler; // For debugging in console 
