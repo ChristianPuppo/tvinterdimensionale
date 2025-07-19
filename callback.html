@@ -27,9 +27,13 @@
             color: #666;
             max-width: 80%;
             word-break: break-all;
-            text-align: center;
+            text-align: left;
             white-space: pre-wrap;
             font-family: monospace;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
         }
         .retry-button {
             background: #1DB954;
@@ -67,7 +71,7 @@
                 logMessage += '\n' + JSON.stringify(data, null, 2);
             }
             console.log(logMessage);
-            debugElement.textContent = logMessage;
+            debugElement.textContent += (debugElement.textContent ? '\n\n' : '') + logMessage;
         }
 
         // Function to handle the OAuth callback
@@ -78,6 +82,11 @@
             
             try {
                 log('Starting authentication process');
+                log('Local Storage Contents:', {
+                    hasCodeVerifier: !!localStorage.getItem('spotify_code_verifier'),
+                    hasToken: !!localStorage.getItem('spotify_token'),
+                    hasRefreshToken: !!localStorage.getItem('spotify_refresh_token')
+                });
 
                 // Get URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
@@ -86,6 +95,7 @@
 
                 log('URL parameters received', {
                     hasCode: !!code,
+                    codeLength: code ? code.length : 0,
                     error: error || 'none',
                     fullUrl: window.location.href
                 });
@@ -101,7 +111,8 @@
                 // Get code verifier from localStorage
                 const codeVerifier = localStorage.getItem('spotify_code_verifier');
                 log('Code verifier status', {
-                    hasCodeVerifier: !!codeVerifier
+                    hasCodeVerifier: !!codeVerifier,
+                    verifierLength: codeVerifier ? codeVerifier.length : 0
                 });
 
                 if (!codeVerifier) {
@@ -109,6 +120,12 @@
                 }
 
                 // Exchange code for token
+                log('Preparing token request', {
+                    clientId: '7a82dcab533b4f3c8d440bb23f82c6b6',
+                    redirectUri: window.location.origin + '/callback.html',
+                    codeVerifierLength: codeVerifier.length
+                });
+
                 const response = await fetch('https://accounts.spotify.com/api/token', {
                     method: 'POST',
                     headers: {
@@ -123,15 +140,23 @@
                     }).toString()
                 });
 
-                log('Token request sent', {
+                log('Token response received', {
                     status: response.status,
-                    statusText: response.statusText
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers)
                 });
 
                 const data = await response.json();
+                log('Token data received', {
+                    hasAccessToken: !!data.access_token,
+                    hasRefreshToken: !!data.refresh_token,
+                    tokenType: data.token_type,
+                    error: data.error,
+                    errorDescription: data.error_description
+                });
                 
                 if (!response.ok) {
-                    throw new Error(`Token request failed: ${data.error}`);
+                    throw new Error(`Token request failed: ${data.error_description || data.error || 'Unknown error'}`);
                 }
 
                 if (!data.access_token) {
@@ -147,8 +172,12 @@
                 // Clean up code verifier
                 localStorage.removeItem('spotify_code_verifier');
 
+                log('Tokens stored successfully', {
+                    hasAccessToken: !!localStorage.getItem('spotify_token'),
+                    hasRefreshToken: !!localStorage.getItem('spotify_refresh_token')
+                });
+
                 messageElement.textContent = 'AUTHENTICATION SUCCESSFUL';
-                log('Successfully authenticated with Spotify');
                 
                 // Redirect back to main page
                 setTimeout(() => {

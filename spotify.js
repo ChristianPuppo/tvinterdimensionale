@@ -6,6 +6,13 @@ class SpotifyHandler {
         console.log('SpotifyHandler initialized');
     }
 
+    generateRandomString(length) {
+        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const values = new Uint8Array(length);
+        window.crypto.getRandomValues(values);
+        return Array.from(values).map(x => possible[x % possible.length]).join('');
+    }
+
     async generateCodeChallenge(codeVerifier) {
         const encoder = new TextEncoder();
         const data = encoder.encode(codeVerifier);
@@ -16,33 +23,35 @@ class SpotifyHandler {
             .replace(/\//g, '_');
     }
 
-    generateCodeVerifier() {
-        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-        const values = crypto.getRandomValues(new Uint8Array(64));
-        return values.reduce((acc, x) => acc + possible[x % possible.length], '');
-    }
-
     async getAuthUrl() {
-        const codeVerifier = this.generateCodeVerifier();
-        const codeChallenge = await this.generateCodeChallenge(codeVerifier);
-        
-        // Store the code verifier for later use
-        localStorage.setItem('spotify_code_verifier', codeVerifier);
+        try {
+            // Generate and store code verifier
+            const codeVerifier = this.generateRandomString(128);
+            console.log('Generated code verifier:', codeVerifier);
+            localStorage.setItem('spotify_code_verifier', codeVerifier);
 
-        const scopes = ['playlist-read-private', 'playlist-read-collaborative'];
-        const params = new URLSearchParams({
-            client_id: this.clientId,
-            response_type: 'code',
-            redirect_uri: this.redirectUri,
-            scope: scopes.join(' '),
-            code_challenge_method: 'S256',
-            code_challenge: codeChallenge,
-            show_dialog: 'true'
-        });
+            // Generate code challenge
+            const codeChallenge = await this.generateCodeChallenge(codeVerifier);
+            console.log('Generated code challenge:', codeChallenge);
 
-        const authUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
-        console.log('Generated auth URL with PKCE');
-        return authUrl;
+            // Build auth URL
+            const params = new URLSearchParams({
+                client_id: this.clientId,
+                response_type: 'code',
+                redirect_uri: this.redirectUri,
+                code_challenge_method: 'S256',
+                code_challenge: codeChallenge,
+                scope: 'playlist-read-private playlist-read-collaborative',
+                show_dialog: 'true'
+            });
+
+            const authUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
+            console.log('Auth URL generated:', authUrl);
+            return authUrl;
+        } catch (error) {
+            console.error('Error generating auth URL:', error);
+            throw error;
+        }
     }
 
     async getAccessToken(code) {
@@ -196,5 +205,6 @@ class SpotifyHandler {
     }
 }
 
+// Create and expose the handler instance
 const spotifyHandler = new SpotifyHandler();
 window.spotifyHandler = spotifyHandler; 
