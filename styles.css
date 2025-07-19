@@ -12,6 +12,7 @@ body {
     align-items: center;
     font-family: 'Press Start 2P', cursive;
     color: #fff;
+    padding: 20px;
 }
 
 .tv-container {
@@ -135,22 +136,22 @@ button {
     transition: all 0.3s ease;
 }
 
-button:hover {
+button:hover:not(:disabled) {
     background: #fff;
     color: #000;
 }
 
-.playlist-controls {
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.spotify-section {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 10px;
-}
-
-#auth-section, #playlist-section {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
+    align-items: center;
 }
 
 .spotify-button {
@@ -163,7 +164,6 @@ button:hover {
     display: flex;
     align-items: center;
     gap: 10px;
-    transition: all 0.3s ease;
 }
 
 .spotify-button:hover {
@@ -175,7 +175,18 @@ button:hover {
     font-size: 20px;
 }
 
-input[type="text"] {
+#playlistSection {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 600px;
+}
+
+#playlistSection.hidden {
+    display: none;
+}
+
+select {
     flex: 1;
     padding: 10px;
     font-family: 'Press Start 2P', cursive;
@@ -183,7 +194,12 @@ input[type="text"] {
     background: #333;
     border: 2px solid #fff;
     color: #fff;
-    min-width: 300px;
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    border-color: #1DB954;
 }
 
 @keyframes scanlines {
