@@ -2,7 +2,8 @@ class SpotifyHandler {
     constructor() {
         this.playlist = [];
         this.clientId = '7a82dcab533b4f3c8d440bb23f82c6b6';
-        this.redirectUri = window.location.origin + '/callback.html';
+        // Use the production URL instead of dynamic preview URLs
+        this.redirectUri = 'https://tvinterdimensionale.vercel.app/callback.html';
     }
 
     getAuthUrl() {
