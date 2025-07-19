@@ -2,10 +2,15 @@ class SpotifyHandler {
     constructor() {
         this.playlist = [];
         this.clientId = '7a82dcab533b4f3c8d440bb23f82c6b6';
-        this.redirectUri = 'https://tvinterdimensionale-5wnf1jt0p-christians-projects-524bbc11.vercel.app/callback.html';
+        this.redirectUri = window.location.origin + '/callback.html';
     }
 
     getAuthUrl() {
+        console.log('Generating auth URL with:', {
+            clientId: this.clientId,
+            redirectUri: this.redirectUri
+        });
+
         const params = new URLSearchParams({
             client_id: this.clientId,
             response_type: 'token',
@@ -14,11 +19,15 @@ class SpotifyHandler {
             show_dialog: true
         });
 
-        return `https://accounts.spotify.com/authorize?${params.toString()}`;
+        const authUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
+        console.log('Generated auth URL:', authUrl);
+        return authUrl;
     }
 
     isAuthenticated() {
-        return !!localStorage.getItem('spotify_token');
+        const hasToken = !!localStorage.getItem('spotify_token');
+        console.log('Checking authentication:', { hasToken });
+        return hasToken;
     }
 
     async fetchPlaylist(playlistUrl) {
@@ -31,21 +40,28 @@ class SpotifyHandler {
                 throw new Error('Not authenticated');
             }
 
+            console.log('Making request with token:', token.substring(0, 10) + '...');
+
             const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
 
+            console.log('Response status:', response.status);
+
             if (response.status === 401) {
                 // Token expired, redirect to login
+                console.log('Token expired, redirecting to login');
                 localStorage.removeItem('spotify_token');
                 window.location.href = this.getAuthUrl();
                 return;
             }
 
             const data = await response.json();
-            console.log('Playlist data received');
+            console.log('Playlist data received:', {
+                trackCount: data.items?.length || 0
+            });
             
             this.playlist = data.items.map(item => ({
                 title: item.track.name,

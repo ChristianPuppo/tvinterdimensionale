@@ -8,19 +8,23 @@
         body {
             background: #000;
             color: #fff;
-            font-family: 'Press Start 2P', cursive;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            gap: 20px;
+            font-family: monospace;
             padding: 20px;
+            margin: 0;
         }
         .message {
+            font-family: 'Press Start 2P', cursive;
             text-align: center;
+            margin-bottom: 20px;
             animation: blink 1s infinite;
+        }
+        .debug {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 20px;
         }
         @keyframes blink {
             50% { opacity: 0; }
@@ -30,40 +34,74 @@
 </head>
 <body>
     <div class="message">AUTHENTICATING...</div>
+    <div id="debug" class="debug"></div>
 
     <script>
+        function log(message, data = null) {
+            const debugElement = document.getElementById('debug');
+            const timestamp = new Date().toISOString();
+            let text = `[${timestamp}] ${message}\n`;
+            if (data) {
+                text += JSON.stringify(data, null, 2) + '\n';
+            }
+            debugElement.textContent += text;
+            console.log(message, data);
+        }
+
         function handleCallback() {
             const messageElement = document.querySelector('.message');
             
             try {
-                // Get access token from URL fragment
-                const hash = window.location.hash.substring(1);
-                const params = new URLSearchParams(hash);
-                const accessToken = params.get('access_token');
-                const error = params.get('error');
+                log('Starting authentication process');
+                log('Full URL:', window.location.href);
+                log('Hash:', window.location.hash);
+                log('Search:', window.location.search);
+
+                // Check URL hash (for implicit flow)
+                if (window.location.hash) {
+                    const hash = window.location.hash.substring(1);
+                    const params = new URLSearchParams(hash);
+                    const accessToken = params.get('access_token');
+                    const error = params.get('error');
+
+                    log('Hash parameters:', Object.fromEntries(params));
+
+                    if (error) {
+                        throw new Error(`Hash error: ${error}`);
+                    }
+
+                    if (accessToken) {
+                        log('Found access token in hash');
+                        localStorage.setItem('spotify_token', accessToken);
+                        messageElement.textContent = 'AUTHENTICATION SUCCESSFUL (HASH)';
+                        setTimeout(() => window.location.href = '/', 2000);
+                        return;
+                    }
+                }
+
+                // Check URL search params (for authorization code flow)
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                const error = urlParams.get('error');
+
+                log('Search parameters:', Object.fromEntries(urlParams));
 
                 if (error) {
-                    throw new Error(`Authentication error: ${error}`);
+                    throw new Error(`Search error: ${error}`);
                 }
 
-                if (!accessToken) {
-                    throw new Error('No access token found');
+                if (code) {
+                    log('Found authorization code');
+                    messageElement.textContent = 'ERROR: UNEXPECTED CODE FLOW';
+                    setTimeout(() => window.location.href = '/', 2000);
+                    return;
                 }
 
-                // Store the access token
-                localStorage.setItem('spotify_token', accessToken);
-                messageElement.textContent = 'AUTHENTICATION SUCCESSFUL';
-
-                // Redirect back to main page
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
+                throw new Error('No token or code found in URL');
             } catch (error) {
-                console.error('Authentication error:', error);
+                log('Authentication error:', error);
                 messageElement.textContent = 'ERROR: ' + error.message.toUpperCase();
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 2000);
+                // Don't redirect automatically on error
             }
         }
 
