@@ -5,7 +5,7 @@ class SpotifyHandler {
 
     getAuthUrl() {
         const clientId = '7a82dcab533b4f3c8d440bb23f82c6b6';
-        const redirectUri = 'https://tvinterdimensionale.vercel.app/callback';
+        const redirectUri = window.location.origin + '/callback.html';
         const scopes = ['playlist-read-private', 'playlist-read-collaborative'];
         
         return 'https://accounts.spotify.com/authorize' +
