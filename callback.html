@@ -16,6 +16,7 @@
             height: 100vh;
             margin: 0;
             gap: 20px;
+            padding: 20px;
         }
         .message {
             text-align: center;
@@ -26,6 +27,22 @@
             color: #666;
             max-width: 80%;
             word-break: break-all;
+            text-align: center;
+        }
+        .retry-button {
+            background: #1DB954;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: none;
+        }
+        .retry-button:hover {
+            background: #1ed760;
         }
         @keyframes blink {
             50% { opacity: 0; }
@@ -36,40 +53,45 @@
 <body>
     <div class="message">AUTHENTICATING...</div>
     <div id="debug" class="debug"></div>
+    <button id="retryButton" class="retry-button" onclick="window.location.href='/'">RETRY</button>
     <script src="spotify.js"></script>
     <script>
         async function handleCallback() {
             const debugElement = document.getElementById('debug');
             const messageElement = document.querySelector('.message');
+            const retryButton = document.getElementById('retryButton');
             
-            // Log the full URL for debugging
-            debugElement.textContent = 'Current URL: ' + window.location.href;
+            try {
+                // Log the full URL for debugging
+                debugElement.textContent = 'Processing authentication...';
 
-            // Check for authorization code
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            const error = urlParams.get('error');
+                // Check for authorization code
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                const error = urlParams.get('error');
 
-            if (error) {
-                messageElement.textContent = 'ERROR: ' + error.toUpperCase();
-                debugElement.textContent += '\nError details: ' + error;
-                return;
-            }
-
-            if (code) {
-                try {
-                    await spotifyHandler.getAccessToken(code);
-                    messageElement.textContent = 'AUTHENTICATION SUCCESSFUL';
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 1000);
-                } catch (error) {
-                    messageElement.textContent = 'ERROR: FAILED TO GET ACCESS TOKEN';
-                    debugElement.textContent += '\nError details: ' + error.message;
+                if (error) {
+                    throw new Error(error);
                 }
-            } else {
-                messageElement.textContent = 'ERROR: NO AUTHORIZATION CODE FOUND';
-                debugElement.textContent += '\nNo code parameter found in URL';
+
+                if (!code) {
+                    throw new Error('No authorization code found');
+                }
+
+                // Try to exchange the code for a token
+                await spotifyHandler.getAccessToken(code);
+                
+                messageElement.textContent = 'AUTHENTICATION SUCCESSFUL';
+                debugElement.textContent = 'Redirecting to home page...';
+                
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } catch (error) {
+                messageElement.textContent = 'ERROR: ' + error.message.toUpperCase();
+                debugElement.textContent = 'Something went wrong. Please try again.';
+                retryButton.style.display = 'block';
+                console.error('Authentication error:', error);
             }
         }
 
