@@ -2,7 +2,6 @@ class SpotifyHandler {
     constructor() {
         this.accessToken = null;
         this.playlist = [];
-        this.playlistDetails = null;
     }
 
     async initialize() {
@@ -29,52 +28,20 @@ class SpotifyHandler {
             // Extract playlist ID from URL
             const playlistId = playlistUrl.split('playlist/')[1].split('?')[0];
             
-            // First, get playlist details
-            const playlistResponse = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+            const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
                 headers: {
                     'Authorization': `Bearer ${this.accessToken}`
                 }
             });
 
-            this.playlistDetails = await playlistResponse.json();
+            const data = await response.json();
             
-            // Then get all tracks with pagination
-            let tracks = [];
-            let nextUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
-            
-            while (nextUrl) {
-                const response = await fetch(nextUrl, {
-                    headers: {
-                        'Authorization': `Bearer ${this.accessToken}`
-                    }
-                });
-
-                const data = await response.json();
-                tracks = tracks.concat(data.items);
-                nextUrl = data.next;
-            }
-            
-            this.playlist = tracks.map(item => ({
+            this.playlist = data.items.map(item => ({
                 title: item.track.name,
-                artist: item.track.artists[0].name,
-                album: item.track.album.name,
-                duration: item.track.duration_ms,
-                albumArt: item.track.album.images[0]?.url,
-                spotifyUrl: item.track.external_urls.spotify,
-                previewUrl: item.track.preview_url
+                artist: item.track.artists[0].name
             }));
 
-            return {
-                playlist: this.playlist,
-                details: {
-                    name: this.playlistDetails.name,
-                    description: this.playlistDetails.description,
-                    owner: this.playlistDetails.owner.display_name,
-                    followers: this.playlistDetails.followers.total,
-                    imageUrl: this.playlistDetails.images[0]?.url,
-                    tracksTotal: this.playlistDetails.tracks.total
-                }
-            };
+            return this.playlist;
         } catch (error) {
             console.error('Failed to fetch playlist:', error);
             throw error;
@@ -92,23 +59,9 @@ class SpotifyHandler {
         return this.playlist.length;
     }
 
-    getPlaylistDetails() {
-        return this.playlistDetails;
-    }
-
     setFallbackPlaylist() {
         this.playlist = fallbackPlaylist;
-        return {
-            playlist: this.playlist,
-            details: {
-                name: "Fallback Playlist",
-                description: "Default playlist when no Spotify playlist is provided",
-                owner: "System",
-                followers: 0,
-                imageUrl: null,
-                tracksTotal: fallbackPlaylist.length
-            }
-        };
+        return this.playlist;
     }
 }
 
