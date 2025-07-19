@@ -1,7 +1,7 @@
 const config = {
     // Replace with your Spotify API credentials
     spotify: {
-        clientId: '2c3c5c4c9c0f4b8b9b8b8b8b8b8b8b8b' // Il tuo Client ID qui
+        clientId: '' // Inserisci qui il tuo vero Client ID
     },
     // Replace with your YouTube Data API key
     youtube: {
