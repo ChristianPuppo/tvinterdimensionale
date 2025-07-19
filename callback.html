@@ -61,9 +61,12 @@
         function log(message, data = null) {
             const debugElement = document.getElementById('debug');
             const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
-            const logMessage = `[${timestamp}] ${message}${data ? '\n' + JSON.stringify(data, null, 2) : ''}`;
+            let logMessage = `[${timestamp}] ${message}`;
+            if (data) {
+                logMessage += '\n' + JSON.stringify(data, null, 2);
+            }
             console.log(logMessage);
-            debugElement.textContent += (debugElement.textContent ? '\n\n' : '') + logMessage;
+            debugElement.textContent = logMessage;
         }
 
         async function handleCallback() {
@@ -72,43 +75,41 @@
             
             try {
                 log('Starting authentication process');
-                log('SpotifyHandler instance:', {
-                    clientId: spotifyHandler.clientId,
-                    redirectUri: spotifyHandler.redirectUri
-                });
 
                 // Check for authorization code
                 const urlParams = new URLSearchParams(window.location.search);
                 const code = urlParams.get('code');
                 const error = urlParams.get('error');
 
-                log('URL parameters:', {
-                    code: code ? code.substring(0, 10) + '...' : null,
-                    error: error
-                });
-
                 if (error) {
-                    throw new Error(error);
+                    throw new Error(`Authentication error: ${error}`);
                 }
 
                 if (!code) {
-                    throw new Error('No authorization code found');
+                    throw new Error('No authorization code found in URL');
                 }
 
-                // Try to exchange the code for a token
-                log('Exchanging code for token...');
+                log('Authorization code received', { code: code.substring(0, 10) + '...' });
+
+                // Verify we have a code verifier
+                const codeVerifier = localStorage.getItem('spotify_code_verifier');
+                if (!codeVerifier) {
+                    throw new Error('No code verifier found - please try logging in again');
+                }
+
+                log('Exchanging code for access token...');
                 await spotifyHandler.getAccessToken(code);
                 
                 messageElement.textContent = 'AUTHENTICATION SUCCESSFUL';
-                log('Authentication successful, redirecting...');
+                log('Successfully authenticated with Spotify');
                 
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 2000);
             } catch (error) {
                 messageElement.textContent = 'ERROR: ' + error.message.toUpperCase();
-                log('Authentication error:', {
-                    message: error.message,
+                log('Authentication failed', {
+                    error: error.message,
                     stack: error.stack
                 });
                 retryButton.style.display = 'block';
