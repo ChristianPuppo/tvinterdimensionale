@@ -147,7 +147,6 @@ button:disabled {
 }
 
 .spotify-section {
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -155,20 +154,30 @@ button:disabled {
 }
 
 .spotify-button {
-    background: #1DB954;
-    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+    background-color: #1DB954;
+    color: white;
     border: none;
-    padding: 15px 30px;
-    border-radius: 50px;
+    padding: 15px 20px;
+    cursor: pointer;
     font-size: 14px;
+    text-transform: uppercase;
     display: flex;
     align-items: center;
     gap: 10px;
+    border: 4px solid #fff;
+    box-shadow: 4px 4px 0 #000;
+    transition: all 0.2s ease;
 }
 
 .spotify-button:hover {
-    background: #1ed760;
-    transform: translateY(-2px);
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #000;
+}
+
+.spotify-button:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #000;
 }
 
 .spotify-icon {
@@ -177,29 +186,135 @@ button:disabled {
 
 #playlistSection {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
     width: 100%;
-    max-width: 600px;
+    max-width: 300px;
 }
 
-#playlistSection.hidden {
-    display: none;
-}
-
-select {
-    flex: 1;
-    padding: 10px;
+#playlistSelect {
     font-family: 'Press Start 2P', cursive;
+    width: 100%;
+    padding: 12px;
     font-size: 12px;
-    background: #333;
-    border: 2px solid #fff;
+    background-color: #000;
     color: #fff;
+    border: 4px solid #fff;
     cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    position: relative;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+    padding-right: 40px;
 }
 
-select:focus {
+#playlistSelect option {
+    font-family: 'Press Start 2P', cursive;
+    padding: 12px;
+    background-color: #000;
+    color: #fff;
+}
+
+#playlistSelect:focus {
     outline: none;
     border-color: #1DB954;
+}
+
+#loadButton {
+    font-family: 'Press Start 2P', cursive;
+    background-color: #000;
+    color: #fff;
+    border: 4px solid #fff;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 12px;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0 #1DB954;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+#loadButton:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #1DB954;
+}
+
+#loadButton:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #1DB954;
+}
+
+#loadButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Animazione glitch per il testo della playlist selezionata */
+@keyframes glitch {
+    0% {
+        transform: translate(0);
+    }
+    20% {
+        transform: translate(-2px, 2px);
+    }
+    40% {
+        transform: translate(-2px, -2px);
+    }
+    60% {
+        transform: translate(2px, 2px);
+    }
+    80% {
+        transform: translate(2px, -2px);
+    }
+    100% {
+        transform: translate(0);
+    }
+}
+
+#playlistSelect:focus option:checked {
+    animation: glitch 0.2s linear infinite;
+}
+
+/* Stile per i pulsanti dei canali */
+#prevChannel, #nextChannel {
+    font-family: 'Press Start 2P', cursive;
+    background-color: #000;
+    color: #fff;
+    border: 4px solid #fff;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 12px;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0 #ff0000;
+    transition: all 0.2s ease;
+}
+
+#prevChannel:hover, #nextChannel:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #ff0000;
+}
+
+#prevChannel:active, #nextChannel:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #ff0000;
+}
+
+#prevChannel:disabled, #nextChannel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 @keyframes scanlines {
