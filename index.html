@@ -27,10 +27,12 @@
                 <button onclick="handleLogin()" class="spotify-button">
                     <span class="spotify-icon">🎵</span> Connect with Spotify
                 </button>
-                <div id="playlistSection" class="hidden">
-                    <select id="playlistSelect">
-                        <option value="">Select a playlist...</option>
-                    </select>
+                <div id="playlistSection" class="hidden playlist-controls">
+                    <div class="playlist-select-container">
+                        <select id="playlistSelect">
+                            <option value="">Select a playlist...</option>
+                        </select>
+                    </div>
                     <button id="loadButton">Load Playlist</button>
                 </div>
             </div>

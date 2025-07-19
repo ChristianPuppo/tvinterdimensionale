@@ -147,6 +147,7 @@ button:disabled {
 }
 
 .spotify-section {
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -154,30 +155,20 @@ button:disabled {
 }
 
 .spotify-button {
-    font-family: 'Press Start 2P', cursive;
-    background-color: #1DB954;
-    color: white;
+    background: #1DB954;
+    color: #fff;
     border: none;
-    padding: 15px 20px;
-    cursor: pointer;
+    padding: 15px 30px;
+    border-radius: 50px;
     font-size: 14px;
-    text-transform: uppercase;
     display: flex;
     align-items: center;
     gap: 10px;
-    border: 4px solid #fff;
-    box-shadow: 4px 4px 0 #000;
-    transition: all 0.2s ease;
 }
 
 .spotify-button:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0 #000;
-}
-
-.spotify-button:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0 #000;
+    background: #1ed760;
+    transform: translateY(-2px);
 }
 
 .spotify-icon {
@@ -186,135 +177,29 @@ button:disabled {
 
 #playlistSection {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-    align-items: center;
+    gap: 10px;
     width: 100%;
-    max-width: 300px;
+    max-width: 600px;
 }
 
-#playlistSelect {
+#playlistSection.hidden {
+    display: none;
+}
+
+select {
+    flex: 1;
+    padding: 10px;
     font-family: 'Press Start 2P', cursive;
-    width: 100%;
-    padding: 12px;
     font-size: 12px;
-    background-color: #000;
+    background: #333;
+    border: 2px solid #fff;
     color: #fff;
-    border: 4px solid #fff;
     cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    position: relative;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 20px;
-    padding-right: 40px;
 }
 
-#playlistSelect option {
-    font-family: 'Press Start 2P', cursive;
-    padding: 12px;
-    background-color: #000;
-    color: #fff;
-}
-
-#playlistSelect:focus {
+select:focus {
     outline: none;
     border-color: #1DB954;
-}
-
-#loadButton {
-    font-family: 'Press Start 2P', cursive;
-    background-color: #000;
-    color: #fff;
-    border: 4px solid #fff;
-    padding: 12px 20px;
-    cursor: pointer;
-    font-size: 12px;
-    text-transform: uppercase;
-    box-shadow: 4px 4px 0 #1DB954;
-    transition: all 0.2s ease;
-    width: 100%;
-}
-
-#loadButton:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0 #1DB954;
-}
-
-#loadButton:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0 #1DB954;
-}
-
-#loadButton:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* Animazione glitch per il testo della playlist selezionata */
-@keyframes glitch {
-    0% {
-        transform: translate(0);
-    }
-    20% {
-        transform: translate(-2px, 2px);
-    }
-    40% {
-        transform: translate(-2px, -2px);
-    }
-    60% {
-        transform: translate(2px, 2px);
-    }
-    80% {
-        transform: translate(2px, -2px);
-    }
-    100% {
-        transform: translate(0);
-    }
-}
-
-#playlistSelect:focus option:checked {
-    animation: glitch 0.2s linear infinite;
-}
-
-/* Stile per i pulsanti dei canali */
-#prevChannel, #nextChannel {
-    font-family: 'Press Start 2P', cursive;
-    background-color: #000;
-    color: #fff;
-    border: 4px solid #fff;
-    padding: 12px 20px;
-    cursor: pointer;
-    font-size: 12px;
-    text-transform: uppercase;
-    box-shadow: 4px 4px 0 #ff0000;
-    transition: all 0.2s ease;
-}
-
-#prevChannel:hover, #nextChannel:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0 #ff0000;
-}
-
-#prevChannel:active, #nextChannel:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0 #ff0000;
-}
-
-#prevChannel:disabled, #nextChannel:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
 }
 
 @keyframes scanlines {
@@ -348,4 +233,178 @@ button:disabled {
 @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
+} 
+
+/* Custom 8-bit select styling */
+.playlist-select-container {
+    position: relative;
+    display: inline-block;
+    margin: 10px;
+}
+
+#playlistSelect {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: #000;
+    border: 3px solid #fff;
+    padding: 10px 35px 10px 10px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    color: #fff;
+    cursor: pointer;
+    min-width: 200px;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #fff,
+        0 0 0 9px #000;
+}
+
+.playlist-select-container::after {
+    content: '▼';
+    font-size: 12px;
+    color: #fff;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    text-shadow: 2px 2px #000;
+}
+
+#playlistSelect:focus {
+    outline: none;
+    border-color: #0f0;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #0f0,
+        0 0 0 9px #000;
+}
+
+#playlistSelect option {
+    background: #000;
+    color: #fff;
+    padding: 10px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+}
+
+#loadButton {
+    background: #000;
+    border: 3px solid #fff;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    color: #fff;
+    cursor: pointer;
+    margin-left: 10px;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #fff,
+        0 0 0 9px #000;
+    transition: all 0.2s ease;
+}
+
+#loadButton:hover {
+    border-color: #0f0;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #0f0,
+        0 0 0 9px #000;
+}
+
+#loadButton:active {
+    transform: scale(0.95);
+}
+
+#loadButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.playlist-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+/* Channel buttons styling */
+#prevChannel, #nextChannel {
+    background: #000;
+    border: 3px solid #fff;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #fff,
+        0 0 0 9px #000;
+    transition: all 0.2s ease;
+}
+
+#prevChannel:hover, #nextChannel:hover {
+    border-color: #0f0;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #0f0,
+        0 0 0 9px #000;
+}
+
+#prevChannel:active, #nextChannel:active {
+    transform: scale(0.95);
+}
+
+#prevChannel:disabled, #nextChannel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Spotify button styling */
+.spotify-button {
+    background: #000;
+    border: 3px solid #fff;
+    padding: 15px 30px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #fff,
+        0 0 0 9px #000;
+    transition: all 0.2s ease;
+}
+
+.spotify-button:hover {
+    border-color: #1DB954;
+    box-shadow: 
+        0 0 0 3px #000,
+        0 0 0 6px #1DB954,
+        0 0 0 9px #000;
+}
+
+.spotify-button:active {
+    transform: scale(0.95);
+}
+
+.spotify-icon {
+    font-size: 20px;
+}
+
+/* Animation for select focus */
+@keyframes selectGlow {
+    0% { box-shadow: 0 0 0 3px #000, 0 0 0 6px #fff, 0 0 0 9px #000; }
+    50% { box-shadow: 0 0 0 3px #000, 0 0 0 6px #0f0, 0 0 0 9px #000; }
+    100% { box-shadow: 0 0 0 3px #000, 0 0 0 6px #fff, 0 0 0 9px #000; }
+}
+
+#playlistSelect:focus {
+    animation: selectGlow 2s infinite;
 } 
