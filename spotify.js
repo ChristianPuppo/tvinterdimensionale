@@ -2,8 +2,15 @@ class SpotifyHandler {
     constructor() {
         this.playlist = [];
         this.clientId = '7a82dcab533b4f3c8d440bb23f82c6b6';
-        // Using a simpler callback URL
-        this.redirectUri = 'https://tvinterdimensionale.vercel.app/callback';
+        // Use localhost for development
+        this.redirectUri = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5500/callback'
+            : 'https://tvinterdimensionale.vercel.app/callback';
+
+        console.log('Initialized with:', {
+            hostname: window.location.hostname,
+            redirectUri: this.redirectUri
+        });
     }
 
     getAuthUrl() {
@@ -48,11 +55,13 @@ class SpotifyHandler {
             console.log('Token response:', {
                 ok: response.ok,
                 status: response.status,
-                hasAccessToken: !!data.access_token
+                hasAccessToken: !!data.access_token,
+                error: data.error,
+                errorDescription: data.error_description
             });
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to get access token');
+                throw new Error(data.error_description || data.error || 'Failed to get access token');
             }
 
             localStorage.setItem('spotify_token', data.access_token);
