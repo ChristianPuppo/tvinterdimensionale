@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authenticating...</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .message {
+            text-align: center;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="message">AUTHENTICATING...</div>
+    <script>
+        const hash = window.location.hash;
+        const token = new URLSearchParams(hash.substring(1)).get("access_token");
+
+        if (token) {
+            localStorage.setItem("spotify_token", token);
+            window.location.href = "/";
+        } else {
+            document.querySelector('.message').textContent = "ERROR: TOKEN NOT FOUND";
+        }
+    </script>
+</body>
+</html> 

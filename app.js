@@ -28,9 +28,17 @@ class VintageTVApp {
 
     async initialize() {
         try {
-            await spotifyHandler.initialize();
             await youtubeHandler.initializePlayer();
             this.startRecordingTimer();
+            
+            // Check Spotify authentication
+            if (!spotifyHandler.isAuthenticated()) {
+                this.updateChannelInfo('NO SIGNAL - LOGIN REQUIRED');
+                this.loadButton.textContent = 'Login with Spotify';
+                this.loadButton.addEventListener('click', () => {
+                    window.location.href = spotifyHandler.getAuthUrl();
+                }, { once: true });
+            }
         } catch (error) {
             console.error('Initialization error:', error);
             this.updateChannelInfo('ERROR - CHECK API KEYS');
@@ -39,6 +47,11 @@ class VintageTVApp {
 
     async loadPlaylist() {
         try {
+            if (!spotifyHandler.isAuthenticated()) {
+                window.location.href = spotifyHandler.getAuthUrl();
+                return;
+            }
+
             this.showGlitchEffect();
             const playlistUrl = this.playlistInput.value.trim();
             
@@ -57,7 +70,11 @@ class VintageTVApp {
             }
         } catch (error) {
             console.error('Failed to load playlist:', error);
-            this.updateChannelInfo('ERROR - INVALID PLAYLIST URL');
+            if (error.message === 'Not authenticated') {
+                window.location.href = spotifyHandler.getAuthUrl();
+            } else {
+                this.updateChannelInfo('ERROR - INVALID PLAYLIST URL');
+            }
         }
     }
 

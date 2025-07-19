@@ -1,38 +1,46 @@
 class SpotifyHandler {
     constructor() {
-        this.accessToken = null;
         this.playlist = [];
     }
 
-    async initialize() {
-        try {
-            const response = await fetch('https://accounts.spotify.com/api/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Authorization': 'Basic ' + btoa(config.spotify.clientId + ':' + config.spotify.clientSecret)
-                },
-                body: 'grant_type=client_credentials'
-            });
+    getAuthUrl() {
+        const clientId = '7a82dcab533b4f3c8d440bb23f82c6b6';
+        const redirectUri = 'https://tvinterdimensionale.vercel.app/callback';
+        const scopes = ['playlist-read-private', 'playlist-read-collaborative'];
+        
+        return 'https://accounts.spotify.com/authorize' +
+            '?client_id=' + clientId +
+            '&response_type=token' +
+            '&redirect_uri=' + encodeURIComponent(redirectUri) +
+            '&scope=' + encodeURIComponent(scopes.join(' '));
+    }
 
-            const data = await response.json();
-            this.accessToken = data.access_token;
-        } catch (error) {
-            console.error('Failed to initialize Spotify:', error);
-            throw error;
-        }
+    isAuthenticated() {
+        return !!localStorage.getItem('spotify_token');
     }
 
     async fetchPlaylist(playlistUrl) {
         try {
             // Extract playlist ID from URL
             const playlistId = playlistUrl.split('playlist/')[1].split('?')[0];
+            const token = localStorage.getItem('spotify_token');
             
+            if (!token) {
+                throw new Error('Not authenticated');
+            }
+
             const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
                 headers: {
-                    'Authorization': `Bearer ${this.accessToken}`
+                    'Authorization': `Bearer ${token}`
                 }
             });
+
+            if (response.status === 401) {
+                // Token expired
+                localStorage.removeItem('spotify_token');
+                window.location.href = this.getAuthUrl();
+                return;
+            }
 
             const data = await response.json();
             
